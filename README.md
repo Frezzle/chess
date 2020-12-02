@@ -1,4 +1,4 @@
-# crazy-chess
+# chess
 
 ## Project setup
 ```
