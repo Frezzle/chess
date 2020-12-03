@@ -71,9 +71,7 @@ export default {
       if (!this.draggingElement) return;
 
       // get board position
-      const boardRect = this.$refs.board.getBoundingClientRect();
-      const boardX = boardRect.x; // x always == left ?
-      const boardY = boardRect.y; // x always == left ?
+      const board = this.$refs.board.getBoundingClientRect();
 
       // get mouse position within window
       const mouseX = mouseMoveEvent.clientX;
@@ -84,8 +82,12 @@ export default {
       const pieceHeight = this.draggingElement.offsetHeight;
 
       // calculate new position for dragged element, relative to board position
-      const elementX = mouseX - boardX - (pieceWidth / 2);
-      const elementY = mouseY - boardY - (pieceHeight / 2);
+      let elementX = mouseX - board.x - (pieceWidth / 2);
+      let elementY = mouseY - board.y - (pieceHeight / 2);
+
+      // keep centre of piece within board boundary
+      elementX = Math.max(Math.min(elementX, board.width - (pieceHeight / 2)), -pieceWidth / 2);
+      elementY = Math.max(Math.min(elementY, board.height - (pieceHeight / 2)), -pieceWidth / 2);
 
       // set element position, relative to board position
       this.draggingElement.style.transform = `translate(${elementX}px, ${elementY}px)`;
