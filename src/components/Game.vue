@@ -79,9 +79,13 @@ export default {
       const mouseX = mouseMoveEvent.clientX;
       const mouseY = mouseMoveEvent.clientY;
 
+      // use piece dimensions to centre it on the cursor
+      const pieceWidth = this.draggingElement.offsetWidth;
+      const pieceHeight = this.draggingElement.offsetHeight;
+
       // calculate new position for dragged element, relative to board position
-      const elementX = mouseX - boardX;
-      const elementY = mouseY - boardY;
+      const elementX = mouseX - boardX - (pieceWidth / 2);
+      const elementY = mouseY - boardY - (pieceHeight / 2);
 
       // set element position, relative to board position
       this.draggingElement.style.transform = `translate(${elementX}px, ${elementY}px)`;
