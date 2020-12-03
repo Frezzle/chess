@@ -1,5 +1,5 @@
 <template>
-  <div class="board">
+  <div class="squares">
     <div :class="[
       'square',
       {
@@ -13,12 +13,13 @@
 
 <script>
 export default {
-  name: "Board",
+  name: "Squares",
 };
 </script>
 
 <style scoped lang="scss">
-.board {
+.squares {
+  user-select: none;
   display: grid;
   grid-template-rows: repeat(8, 1fr);
   grid-template-columns: repeat(8, 1fr);
@@ -27,6 +28,8 @@ export default {
 }
 
 .square {
+  user-select: none;
+
   &.light {
     background-color: burlywood;
   }

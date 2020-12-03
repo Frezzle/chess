@@ -1,58 +1,109 @@
 <template>
   <div class="game">
-    <Board />
-    <div class="piece wp square-a2"></div>
-    <div class="piece wp square-b2"></div>
-    <div class="piece wp square-c2"></div>
-    <div class="piece wp square-d2"></div>
-    <div class="piece wp square-e2"></div>
-    <div class="piece wp square-f2"></div>
-    <div class="piece wp square-g2"></div>
-    <div class="piece wp square-h2"></div>
-    <div class="piece wr square-a1"></div>
-    <div class="piece wn square-b1"></div>
-    <div class="piece wb square-c1"></div>
-    <div class="piece wq square-d1"></div>
-    <div class="piece wk square-e1"></div>
-    <div class="piece wb square-f1"></div>
-    <div class="piece wn square-g1"></div>
-    <div class="piece wr square-h1"></div>
-    <div class="piece bp square-a7"></div>
-    <div class="piece bp square-b7"></div>
-    <div class="piece bp square-c7"></div>
-    <div class="piece bp square-d7"></div>
-    <div class="piece bp square-e7"></div>
-    <div class="piece bp square-f7"></div>
-    <div class="piece bp square-g7"></div>
-    <div class="piece bp square-h7"></div>
-    <div class="piece br square-a8"></div>
-    <div class="piece bn square-b8"></div>
-    <div class="piece bb square-c8"></div>
-    <div class="piece bq square-d8"></div>
-    <div class="piece bk square-e8"></div>
-    <div class="piece bb square-f8"></div>
-    <div class="piece bn square-g8"></div>
-    <div class="piece br square-h8"></div>
+    <div class="board" ref="board">
+      <Squares />
+      <div class="piece wp square-a2"></div>
+      <div class="piece wp square-b2"></div>
+      <div class="piece wp square-c2"></div>
+      <div class="piece wp square-d2"></div>
+      <div class="piece wp square-e2"></div>
+      <div class="piece wp square-f2"></div>
+      <div class="piece wp square-g2"></div>
+      <div class="piece wp square-h2"></div>
+      <div class="piece wr square-a1"></div>
+      <div class="piece wn square-b1"></div>
+      <div class="piece wb square-c1"></div>
+      <div class="piece wq square-d1"></div>
+      <div class="piece wk square-e1"></div>
+      <div class="piece wb square-f1"></div>
+      <div class="piece wn square-g1"></div>
+      <div class="piece wr square-h1"></div>
+      <div class="piece bp square-a7"></div>
+      <div class="piece bp square-b7"></div>
+      <div class="piece bp square-c7"></div>
+      <div class="piece bp square-d7"></div>
+      <div class="piece bp square-e7"></div>
+      <div class="piece bp square-f7"></div>
+      <div class="piece bp square-g7"></div>
+      <div class="piece bp square-h7"></div>
+      <div class="piece br square-a8"></div>
+      <div class="piece bn square-b8"></div>
+      <div class="piece bb square-c8"></div>
+      <div class="piece bq square-d8"></div>
+      <div class="piece bk square-e8"></div>
+      <div class="piece bb square-f8"></div>
+      <div class="piece bn square-g8"></div>
+      <div class="piece br square-h8"></div>
+    </div>
   </div>
 </template>
 
 <script>
-import Board from "./Board.vue";
+import Squares from "./Squares.vue";
 
 export default {
   name: "Game",
   components: {
-    Board,
+    Squares,
+  },
+  data() {
+    return {
+      draggingElement: null,
+    };
+  },
+  mounted() {
+    const pieces = document.getElementsByClassName('piece');
+    for (const piece of pieces) {
+      piece.addEventListener('mousedown', this.grabPiece);
+    }
+    document.addEventListener('mousemove', this.dragPiece);
+    document.addEventListener('mouseup', this.dropPiece);
+  },
+  destroyed() {
+    document.removeEventListener('mousemove', this.dragPiece);
+    document.removeEventListener('mouseup', this.dropPiece);
+  },
+  methods: {
+    grabPiece(mouseDownEvent) {
+      this.draggingElement = mouseDownEvent.target;
+    },
+    dragPiece(mouseMoveEvent) {
+      if (!this.draggingElement) return;
+
+      // get board position
+      const boardRect = this.$refs.board.getBoundingClientRect();
+      const boardX = boardRect.x; // x always == left ?
+      const boardY = boardRect.y; // x always == left ?
+
+      // get mouse position within window
+      const mouseX = mouseMoveEvent.clientX;
+      const mouseY = mouseMoveEvent.clientY;
+
+      // calculate new position for dragged element, relative to board position
+      const elementX = mouseX - boardX;
+      const elementY = mouseY - boardY;
+
+      // set element position, relative to board position
+      this.draggingElement.style.transform = `translate(${elementX}px, ${elementY}px)`;
+    },
+    dropPiece() {
+      if (!this.draggingElement) return;
+
+      this.draggingElement = null;
+    },
   },
 };
 </script>
 
 <style scoped lang="scss">
-.game {
+.game,
+.board {
+  user-select: none;
   position: relative;
 }
 
 .piece {
+  user-select: none;
   width: 12.5%;
   height: 12.5%;
   position: absolute;
@@ -63,6 +114,9 @@ export default {
 
   &:hover {
     cursor: grab;
+  }
+  &:active {
+    cursor: grabbing;
   }
 }
 
