@@ -66,6 +66,7 @@ export default {
   methods: {
     grabPiece(mouseDownEvent) {
       this.draggingElement = mouseDownEvent.target;
+      this.draggingElement.classList.add('dragging');
     },
     dragPiece(mouseMoveEvent) {
       if (!this.draggingElement) return;
@@ -95,6 +96,7 @@ export default {
     dropPiece() {
       if (!this.draggingElement) return;
 
+      this.draggingElement.classList.remove('dragging');
       this.draggingElement = null;
     },
   },
@@ -123,6 +125,10 @@ export default {
   }
   &:active {
     cursor: grabbing;
+  }
+
+  &.dragging {
+    z-index: 1;
   }
 }
 
