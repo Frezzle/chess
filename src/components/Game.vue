@@ -67,20 +67,23 @@ export default {
     grabPiece(mouseDownEvent) {
       this.draggingElement = mouseDownEvent.target;
       this.draggingElement.classList.add('dragging');
-      this.centrePieceToCursor(mouseDownEvent.clientX, mouseDownEvent.clientY);
+      this.centrePieceOnCursor(mouseDownEvent.clientX, mouseDownEvent.clientY);
     },
     dragPiece(mouseMoveEvent) {
       if (!this.draggingElement) return;
 
-      this.centrePieceToCursor(mouseMoveEvent.clientX, mouseMoveEvent.clientY);
+      this.centrePieceOnCursor(mouseMoveEvent.clientX, mouseMoveEvent.clientY);
     },
-    dropPiece() {
+    dropPiece(mouseUpEvent) {
       if (!this.draggingElement) return;
+
+      // for now, simple snap piece to the square it lands on
+      this.snapPieceToClosestSquare(mouseUpEvent.clientX, mouseUpEvent.clientY);
 
       this.draggingElement.classList.remove('dragging');
       this.draggingElement = null;
     },
-    centrePieceToCursor(clientX, clientY) {
+    centrePieceOnCursor(mouseClientX, mouseClientY) {
       // get board position
       const board = this.$refs.board.getBoundingClientRect();
 
@@ -89,8 +92,8 @@ export default {
       const pieceHeight = this.draggingElement.offsetHeight;
 
       // calculate new position for dragged element, relative to board position
-      let elementX = clientX - board.x - (pieceWidth / 2);
-      let elementY = clientY - board.y - (pieceHeight / 2);
+      let elementX = mouseClientX - board.x - (pieceWidth / 2);
+      let elementY = mouseClientY - board.y - (pieceHeight / 2);
 
       // keep centre of piece within board boundary
       elementX = Math.max(Math.min(elementX, board.width - (pieceHeight / 2)), -pieceWidth / 2);
@@ -98,6 +101,39 @@ export default {
 
       // set element position, relative to board position
       this.draggingElement.style.transform = `translate(${elementX}px, ${elementY}px)`;
+    },
+    snapPieceToClosestSquare(mouseClientX, mouseClientY) {
+      // get board position
+      const board = this.$refs.board.getBoundingClientRect();
+
+      // calculate cursor position on board
+      const cursorBoardX = mouseClientX - board.x;
+      const cursorBoardY = mouseClientY - board.y;
+
+      // get square dimensions
+      const squareWidth = board.width / 8;
+      const squareHeight = board.height / 8;
+
+      // calculate the closest rank
+      let rank = 8 - Math.floor(cursorBoardY / squareHeight);
+      rank = Math.max(Math.min(rank, 8), 1); // just in case, keep between 1 and 8
+
+      // calculate the closest file
+      let file = 1 + Math.floor(cursorBoardX / squareWidth);
+      file = Math.max(Math.min(file, 8), 1); // just in case, keep between 1 and 8 (a and h)
+      file = String.fromCharCode(file + 96); // 1-8 to a-h
+
+      // remove existing square class(es, though there should be max one ever)
+      for (let i = 0; i < this.draggingElement.classList.length; ++i) {
+        const className = this.draggingElement.classList[i];
+        if (this.draggingElement.classList[i].startsWith('square-')) {
+          this.draggingElement.classList.remove(className);
+        }
+      }
+      // set piece position by assigning the appropriate square class
+      this.draggingElement.classList.add(`square-${file}${rank}`)
+      // remove the transform it had while being dragged
+      this.draggingElement.style.transform = null;
     },
   },
 };
