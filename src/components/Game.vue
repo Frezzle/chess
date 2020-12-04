@@ -123,11 +123,9 @@ export default {
   &:hover {
     cursor: grab;
   }
-  &:active {
-    cursor: grabbing;
-  }
 
   &.dragging {
+    cursor: grabbing;
     z-index: 1;
   }
 }
