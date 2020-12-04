@@ -2,43 +2,17 @@
   <div class="game">
     <div class="board" ref="board">
       <Squares />
-      <div class="piece wp square-a2"></div>
-      <div class="piece wp square-b2"></div>
-      <div class="piece wp square-c2"></div>
-      <div class="piece wp square-d2"></div>
-      <div class="piece wp square-e2"></div>
-      <div class="piece wp square-f2"></div>
-      <div class="piece wp square-g2"></div>
-      <div class="piece wp square-h2"></div>
-      <div class="piece wr square-a1"></div>
-      <div class="piece wn square-b1"></div>
-      <div class="piece wb square-c1"></div>
-      <div class="piece wq square-d1"></div>
-      <div class="piece wk square-e1"></div>
-      <div class="piece wb square-f1"></div>
-      <div class="piece wn square-g1"></div>
-      <div class="piece wr square-h1"></div>
-      <div class="piece bp square-a7"></div>
-      <div class="piece bp square-b7"></div>
-      <div class="piece bp square-c7"></div>
-      <div class="piece bp square-d7"></div>
-      <div class="piece bp square-e7"></div>
-      <div class="piece bp square-f7"></div>
-      <div class="piece bp square-g7"></div>
-      <div class="piece bp square-h7"></div>
-      <div class="piece br square-a8"></div>
-      <div class="piece bn square-b8"></div>
-      <div class="piece bb square-c8"></div>
-      <div class="piece bq square-d8"></div>
-      <div class="piece bk square-e8"></div>
-      <div class="piece bb square-f8"></div>
-      <div class="piece bn square-g8"></div>
-      <div class="piece br square-h8"></div>
+      <div
+        v-for="piece in pieces"
+        :key="piece.type + piece.square"
+        :class="['piece', piece.type, `square-${piece.square}`]"
+      ></div>
     </div>
   </div>
 </template>
 
 <script>
+import initialPieces from '../engine/initialPieces';
 import Squares from "./Squares.vue";
 
 export default {
@@ -49,12 +23,13 @@ export default {
   data() {
     return {
       draggingElement: null,
+      pieces: initialPieces,
     };
   },
   mounted() {
-    const pieces = document.getElementsByClassName('piece');
-    for (const piece of pieces) {
-      piece.addEventListener('mousedown', this.grabPiece);
+    const pieceElements = document.getElementsByClassName('piece');
+    for (const pieceElement of pieceElements) {
+      pieceElement.addEventListener('mousedown', this.grabPiece);
     }
     document.addEventListener('mousemove', this.dragPiece);
     document.addEventListener('mouseup', this.dropPiece);
