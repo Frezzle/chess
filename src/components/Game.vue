@@ -67,24 +67,30 @@ export default {
     grabPiece(mouseDownEvent) {
       this.draggingElement = mouseDownEvent.target;
       this.draggingElement.classList.add('dragging');
+      this.centrePieceToCursor(mouseDownEvent.clientX, mouseDownEvent.clientY);
     },
     dragPiece(mouseMoveEvent) {
       if (!this.draggingElement) return;
 
+      this.centrePieceToCursor(mouseMoveEvent.clientX, mouseMoveEvent.clientY);
+    },
+    dropPiece() {
+      if (!this.draggingElement) return;
+
+      this.draggingElement.classList.remove('dragging');
+      this.draggingElement = null;
+    },
+    centrePieceToCursor(clientX, clientY) {
       // get board position
       const board = this.$refs.board.getBoundingClientRect();
-
-      // get mouse position within window
-      const mouseX = mouseMoveEvent.clientX;
-      const mouseY = mouseMoveEvent.clientY;
 
       // use piece dimensions to centre it on the cursor
       const pieceWidth = this.draggingElement.offsetWidth;
       const pieceHeight = this.draggingElement.offsetHeight;
 
       // calculate new position for dragged element, relative to board position
-      let elementX = mouseX - board.x - (pieceWidth / 2);
-      let elementY = mouseY - board.y - (pieceHeight / 2);
+      let elementX = clientX - board.x - (pieceWidth / 2);
+      let elementY = clientY - board.y - (pieceHeight / 2);
 
       // keep centre of piece within board boundary
       elementX = Math.max(Math.min(elementX, board.width - (pieceHeight / 2)), -pieceWidth / 2);
@@ -92,12 +98,6 @@ export default {
 
       // set element position, relative to board position
       this.draggingElement.style.transform = `translate(${elementX}px, ${elementY}px)`;
-    },
-    dropPiece() {
-      if (!this.draggingElement) return;
-
-      this.draggingElement.classList.remove('dragging');
-      this.draggingElement = null;
     },
   },
 };
