@@ -43,17 +43,11 @@ export default {
     },
     hintStyles() {
       return this.moveHints.map((h) => {
-        // get workable coordinates for the move start and end
-        const fromFile = h.from.charCodeAt(0) - 96;
-        const toFile = h.to.charCodeAt(0) - 96;
-        const fromRank = Number.parseInt(h.from[1]);
-        const toRank = Number.parseInt(h.to[1]);
-
         // initial estimate of arrow bounding box (may change below if the arrow is horizontal or vertical)
-        let topPixels = (8 - Math.max(fromRank, toRank)) * this.squareSizePixels + this.squareSizePixels / 2;
-        let leftPixels = (Math.min(fromFile, toFile) - 1) * this.squareSizePixels + this.squareSizePixels / 2;
-        let widthPixels = Math.abs(toFile - fromFile) * this.squareSizePixels;
-        let heightPixels = Math.abs(toRank - fromRank) * this.squareSizePixels;
+        let topPixels = (8 - Math.max(h.from.rank, h.to.rank)) * this.squareSizePixels + this.squareSizePixels / 2;
+        let leftPixels = (Math.min(h.from.file, h.to.file) - 1) * this.squareSizePixels + this.squareSizePixels / 2;
+        let widthPixels = Math.abs(h.to.file - h.from.file) * this.squareSizePixels;
+        let heightPixels = Math.abs(h.to.rank - h.from.rank) * this.squareSizePixels;
 
         // calculate arrow angle
         let angleDegrees;
@@ -65,7 +59,7 @@ export default {
           angleDegrees = 90;
           leftPixels -= arrowMinPixels / 2;
           widthPixels = arrowMinPixels;
-          arrowHeadTopPercent = fromRank < toRank ? 0 : 100;
+          arrowHeadTopPercent = h.from.rank < h.to.rank ? 0 : 100;
           arrowHeadLeftPercent = 50;
         } else if (heightPixels == 0) {
           // ensure arrow has some height if it's horizontal
@@ -73,11 +67,11 @@ export default {
           topPixels -= arrowMinPixels / 2;
           heightPixels = arrowMinPixels;
           arrowHeadTopPercent = 50;
-          arrowHeadLeftPercent = fromFile < toFile ? 100 : 0;
+          arrowHeadLeftPercent = h.from.file < h.to.file ? 100 : 0;
         } else {
-          angleDegrees = Math.atan2(toFile - fromFile, toRank - fromRank) * 180 / Math.PI + 90;
-          arrowHeadTopPercent = fromRank < toRank ? 0 : 100;
-          arrowHeadLeftPercent = fromFile < toFile ? 100 : 0;
+          angleDegrees = Math.atan2(h.to.file - h.from.file, h.to.rank - h.from.rank) * 180 / Math.PI + 90;
+          arrowHeadTopPercent = h.from.rank < h.to.rank ? 0 : 100;
+          arrowHeadLeftPercent = h.from.file < h.to.file ? 100 : 0;
         }
 
         return {

@@ -8,36 +8,84 @@ export class Game {
     // TODO calculate possible moves instead of mocking them
     return [
       {
-        from: 'a2',
-        to: 'a3',
+        from: {
+          file: 1,
+          rank: 2,
+        },
+        to: {
+          file: 1,
+          rank: 3,
+        },
       },
       {
-        from: 'b2',
-        to: 'b4',
+        from: {
+          file: 2,
+          rank: 2,
+        },
+        to: {
+          file: 2,
+          rank: 4,
+        },
       },
       {
-        from: 'd5',
-        to: 'f5',
+        from: {
+          file: 4,
+          rank: 5,
+        },
+        to: {
+          file: 6,
+          rank: 5,
+        },
       },
       {
-        from: 'f6',
-        to: 'd6',
+        from: {
+          file: 6,
+          rank: 6,
+        },
+        to: {
+          file: 4,
+          rank: 6,
+        },
       },
       {
-        from: 'h2',
-        to: 'g4',
+        from: {
+          file: 8,
+          rank: 2,
+        },
+        to: {
+          file: 7,
+          rank: 4,
+        },
       },
       {
-        from: 'h7',
-        to: 'g5',
+        from: {
+          file: 8,
+          rank: 7,
+        },
+        to: {
+          file: 7,
+          rank: 5,
+        },
       },
       {
-        from: 'a7',
-        to: 'c6',
+        from: {
+          file: 1,
+          rank: 7,
+        },
+        to: {
+          file: 3,
+          rank: 6,
+        },
       },
       {
-        from: 'c5',
-        to: 'c3',
+        from: {
+          file: 3,
+          rank: 5,
+        },
+        to: {
+          file: 3,
+          rank: 3,
+        },
       },
     ];
   }

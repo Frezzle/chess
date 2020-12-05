@@ -4,8 +4,8 @@
       <Squares :moveHints="nextValidMoves" />
       <div
         v-for="piece in pieces"
-        :key="piece.type + piece.square"
-        :class="['piece', piece.type, `square-${piece.square}`]"
+        :key="JSON.stringify(piece)"
+        :class="['piece', `${piece.colour}${piece.type}`, `square-${piece.file}${piece.rank}`]"
       ></div>
     </div>
   </div>
@@ -99,7 +99,6 @@ export default {
       // calculate the closest file
       let file = 1 + Math.floor(cursorBoardX / squareWidth);
       file = Math.max(Math.min(file, 8), 1); // just in case, keep between 1 and 8 (a and h)
-      file = String.fromCharCode(file + 96); // 1-8 to a-h
 
       // remove existing square class(es, though there should be max one ever)
       for (let i = 0; i < this.draggingElement.classList.length; ++i) {
@@ -183,197 +182,196 @@ export default {
 }
 
 // positions
-.square-a1 {
+.square-11 {
   transform: translate(0%, 700%);
 }
-.square-a2 {
+.square-12 {
   transform: translate(0%, 600%);
 }
-.square-a3 {
+.square-13 {
   transform: translate(0%, 500%);
 }
-.square-a4 {
+.square-14 {
   transform: translate(0%, 400%);
 }
-.square-a5 {
+.square-15 {
   transform: translate(0%, 300%);
 }
-.square-a6 {
+.square-16 {
   transform: translate(0%, 200%);
 }
-.square-a7 {
+.square-17 {
   transform: translate(0%, 100%);
 }
-.square-a8 {
+.square-18 {
   transform: translate(0%, 0%);
 }
-.square-b1 {
+.square-21 {
   transform: translate(100%, 700%);
 }
-.square-b2 {
+.square-22 {
   transform: translate(100%, 600%);
 }
-.square-b3 {
+.square-23 {
   transform: translate(100%, 500%);
 }
-.square-b4 {
+.square-24 {
   transform: translate(100%, 400%);
 }
-.square-b5 {
+.square-25 {
   transform: translate(100%, 300%);
 }
-.square-b6 {
+.square-26 {
   transform: translate(100%, 200%);
 }
-.square-b7 {
+.square-27 {
   transform: translate(100%, 100%);
 }
-.square-b8 {
+.square-28 {
   transform: translate(100%, 0%);
 }
-.square-c1 {
+.square-31 {
   transform: translate(200%, 700%);
 }
-.square-c2 {
+.square-32 {
   transform: translate(200%, 600%);
 }
-.square-c3 {
+.square-33 {
   transform: translate(200%, 500%);
 }
-.square-c4 {
+.square-34 {
   transform: translate(200%, 400%);
 }
-.square-c5 {
+.square-35 {
   transform: translate(200%, 300%);
 }
-.square-c6 {
+.square-36 {
   transform: translate(200%, 200%);
 }
-.square-c7 {
+.square-37 {
   transform: translate(200%, 100%);
 }
-.square-c8 {
+.square-38 {
   transform: translate(200%, 0%);
 }
-.square-d1 {
+.square-41 {
   transform: translate(300%, 700%);
 }
-.square-d2 {
+.square-42 {
   transform: translate(300%, 600%);
 }
-.square-d3 {
+.square-43 {
   transform: translate(300%, 500%);
 }
-.square-d4 {
+.square-44 {
   transform: translate(300%, 400%);
 }
-.square-d5 {
+.square-45 {
   transform: translate(300%, 300%);
 }
-.square-d6 {
+.square-46 {
   transform: translate(300%, 200%);
 }
-.square-d7 {
+.square-47 {
   transform: translate(300%, 100%);
 }
-.square-d8 {
+.square-48 {
   transform: translate(300%, 0%);
 }
-.square-e1 {
+.square-51 {
   transform: translate(400%, 700%);
 }
-.square-e2 {
+.square-52 {
   transform: translate(400%, 600%);
 }
-.square-e3 {
+.square-53 {
   transform: translate(400%, 500%);
 }
-.square-e4 {
+.square-54 {
   transform: translate(400%, 400%);
 }
-.square-e5 {
+.square-55 {
   transform: translate(400%, 300%);
 }
-.square-e6 {
+.square-56 {
   transform: translate(400%, 200%);
 }
-.square-e7 {
+.square-57 {
   transform: translate(400%, 100%);
 }
-.square-e8 {
+.square-58 {
   transform: translate(400%, 0%);
 }
-.square-f1 {
+.square-61 {
   transform: translate(500%, 700%);
 }
-.square-f2 {
+.square-62 {
   transform: translate(500%, 600%);
 }
-.square-f3 {
+.square-63 {
   transform: translate(500%, 500%);
 }
-.square-f4 {
+.square-64 {
   transform: translate(500%, 400%);
 }
-.square-f5 {
+.square-65 {
   transform: translate(500%, 300%);
 }
-.square-f6 {
+.square-66 {
   transform: translate(500%, 200%);
 }
-.square-f7 {
+.square-67 {
   transform: translate(500%, 100%);
 }
-.square-f8 {
+.square-68 {
   transform: translate(500%, 0%);
 }
-
-.square-g1 {
+.square-71 {
   transform: translate(600%, 700%);
 }
-.square-g2 {
+.square-72 {
   transform: translate(600%, 600%);
 }
-.square-g3 {
+.square-73 {
   transform: translate(600%, 500%);
 }
-.square-g4 {
+.square-74 {
   transform: translate(600%, 400%);
 }
-.square-g5 {
+.square-75 {
   transform: translate(600%, 300%);
 }
-.square-g6 {
+.square-76 {
   transform: translate(600%, 200%);
 }
-.square-g7 {
+.square-77 {
   transform: translate(600%, 100%);
 }
-.square-g8 {
+.square-78 {
   transform: translate(600%, 0%);
 }
-.square-h1 {
+.square-81 {
   transform: translate(700%, 700%);
 }
-.square-h2 {
+.square-82 {
   transform: translate(700%, 600%);
 }
-.square-h3 {
+.square-83 {
   transform: translate(700%, 500%);
 }
-.square-h4 {
+.square-84 {
   transform: translate(700%, 400%);
 }
-.square-h5 {
+.square-85 {
   transform: translate(700%, 300%);
 }
-.square-h6 {
+.square-86 {
   transform: translate(700%, 200%);
 }
-.square-h7 {
+.square-87 {
   transform: translate(700%, 100%);
 }
-.square-h8 {
+.square-88 {
   transform: translate(700%, 0%);
 }
 </style>
