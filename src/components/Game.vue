@@ -1,7 +1,7 @@
 <template>
   <div class="game">
     <div class="board" ref="board">
-      <Squares />
+      <Squares :moveHints="nextValidMoves" />
       <div
         v-for="piece in pieces"
         :key="piece.type + piece.square"
@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import initialPieces from '../engine/initialPieces';
+import { Game } from '../engine';
 import Squares from "./Squares.vue";
 
 export default {
@@ -21,9 +21,12 @@ export default {
     Squares,
   },
   data() {
+    const game = new Game();
     return {
+      game,
       draggingElement: null,
-      pieces: initialPieces,
+      pieces: game.pieces,
+      nextValidMoves: game.getNextValidMoves(),
     };
   },
   mounted() {
