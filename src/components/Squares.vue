@@ -5,7 +5,6 @@
         v-for="square in squares"
         :key="square.location"
         :class="['square', square.colour]"
-        :ref="square.location"
       ></div>
     </div>
     <div v-for="style in hintStyles" :key="JSON.stringify(style)" class="arrow" :style="style.arrow">
@@ -34,7 +33,7 @@ export default {
         for (let file = 1; file <= 8; ++file, ++i)
           squares.push({
             colour: (i + Math.floor(i/8)) % 2 === 0 ? 'light' : 'dark',
-            location: `${String.fromCharCode(file + 96)}${rank}`, // 1-8 to a-h
+            location: `${file}${rank}`,
           });
       return squares;
     },
@@ -76,7 +75,6 @@ export default {
 
         return {
           arrow: {
-            outline: '2px dashed white', // TODO remove after debugging
             top: `${topPixels}px`,
             left: `${leftPixels}px`,
             width: `${widthPixels}px`,

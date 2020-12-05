@@ -5,6 +5,7 @@ export default [
     file: 1,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -12,6 +13,7 @@ export default [
     file: 2,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -19,6 +21,7 @@ export default [
     file: 3,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -26,6 +29,7 @@ export default [
     file: 4,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -33,6 +37,7 @@ export default [
     file: 5,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -40,6 +45,7 @@ export default [
     file: 6,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -47,6 +53,7 @@ export default [
     file: 7,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -54,6 +61,7 @@ export default [
     file: 8,
     rank: 2,
     captured: false,
+    moved: false,
   },
   {
     type: 'r',
@@ -61,6 +69,7 @@ export default [
     file: 1,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'n',
@@ -68,6 +77,7 @@ export default [
     file: 2,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'b',
@@ -75,6 +85,7 @@ export default [
     file: 3,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'q',
@@ -82,6 +93,7 @@ export default [
     file: 4,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'k',
@@ -89,6 +101,7 @@ export default [
     file: 5,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'b',
@@ -96,6 +109,7 @@ export default [
     file: 6,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'n',
@@ -103,6 +117,7 @@ export default [
     file: 7,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'r',
@@ -110,6 +125,7 @@ export default [
     file: 8,
     rank: 1,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -117,6 +133,7 @@ export default [
     file: 1,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -124,6 +141,7 @@ export default [
     file: 2,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -131,6 +149,7 @@ export default [
     file: 3,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -138,6 +157,7 @@ export default [
     file: 4,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -145,6 +165,7 @@ export default [
     file: 5,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -152,6 +173,7 @@ export default [
     file: 6,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -159,6 +181,7 @@ export default [
     file: 7,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'p',
@@ -166,6 +189,7 @@ export default [
     file: 8,
     rank: 7,
     captured: false,
+    moved: false,
   },
   {
     type: 'r',
@@ -173,6 +197,7 @@ export default [
     file: 1,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'n',
@@ -180,6 +205,7 @@ export default [
     file: 2,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'b',
@@ -187,6 +213,7 @@ export default [
     file: 3,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'q',
@@ -194,6 +221,7 @@ export default [
     file: 4,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'k',
@@ -201,6 +229,7 @@ export default [
     file: 5,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'b',
@@ -208,6 +237,7 @@ export default [
     file: 6,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'n',
@@ -215,6 +245,7 @@ export default [
     file: 7,
     rank: 8,
     captured: false,
+    moved: false,
   },
   {
     type: 'r',
@@ -222,5 +253,6 @@ export default [
     file: 8,
     rank: 8,
     captured: false,
+    moved: false,
   },
 ];

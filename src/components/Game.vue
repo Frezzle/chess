@@ -3,8 +3,8 @@
     <div class="board" ref="board">
       <Squares :moveHints="nextValidMoves" />
       <div
-        v-for="piece in pieces"
-        :key="JSON.stringify(piece)"
+        v-for="(piece, i) in pieces"
+        :key="i"
         :class="['piece', `${piece.colour}${piece.type}`, `square-${piece.file}${piece.rank}`]"
       ></div>
     </div>
@@ -28,6 +28,14 @@ export default {
       pieces: game.pieces,
       nextValidMoves: game.getNextValidMoves(),
     };
+  },
+  computed: {
+    draggingPiece() {
+      if (!this.draggingElement) return null;
+      return this.pieces.find((piece) => (
+        this.draggingElement.classList.contains(`square-${piece.file}${piece.rank}`)
+      ));
+    },
   },
   mounted() {
     const pieceElements = document.getElementsByClassName('piece');
@@ -59,6 +67,7 @@ export default {
       this.snapPieceToClosestSquare(mouseUpEvent.clientX, mouseUpEvent.clientY);
 
       this.draggingElement.classList.remove('dragging');
+      this.draggingElement.style.transform = null;
       this.draggingElement = null;
     },
     centrePieceOnCursor(mouseClientX, mouseClientY) {
@@ -100,6 +109,28 @@ export default {
       let file = 1 + Math.floor(cursorBoardX / squareWidth);
       file = Math.max(Math.min(file, 8), 1); // just in case, keep between 1 and 8 (a and h)
 
+      // allow moving piece back to its original square
+      if (this.draggingPiece.file == file && this.draggingPiece.rank == rank) return;
+
+      // try the move
+      const move = {
+        from: { file: this.draggingPiece.file, rank: this.draggingPiece.rank },
+        to: { file, rank },
+      };
+      const moved = this.game.movePiece(move);
+      if (!moved) return;
+      // const validMove = this.nextValidMoves.find((move) =>
+      //   move.from.file == this.draggingPiece.file &&
+      //   move.from.rank == this.draggingPiece.rank &&
+      //   move.to.file == file &&
+      //   move.to.rank == rank
+      // );
+      // if (!validMove) return;
+
+      // update game state with new engine state
+      this.pieces = this.game.pieces;
+      this.nextValidMoves = this.game.getNextValidMoves();
+
       // remove existing square class(es, though there should be max one ever)
       for (let i = 0; i < this.draggingElement.classList.length; ++i) {
         const className = this.draggingElement.classList[i];
@@ -107,10 +138,9 @@ export default {
           this.draggingElement.classList.remove(className);
         }
       }
+
       // set piece position by assigning the appropriate square class
       this.draggingElement.classList.add(`square-${file}${rank}`)
-      // remove the transform it had while being dragged
-      this.draggingElement.style.transform = null;
     },
   },
 };
