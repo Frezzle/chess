@@ -1,8 +1,17 @@
 import initialPieces from './initialPieces';
 
 export class Game {
-  pieces = initialPieces;
   turn = 'w';
+  // pieces and board reference each other, to make code simpler and faster hopefully
+  pieces = initialPieces;
+  board; // 9x9 2D array (1st of each array is not used, for easy 1-8 file/rank indexing)
+  
+  constructor() {
+    const empty = [null, null, null, null, null, null, null, null, null];
+    this.board = empty.map(() => [...empty]);
+    for (let i = 0; i < this.pieces.length; ++i)
+      this.board[this.pieces[i].file][this.pieces[i].rank] = this.pieces[i];
+  }
 
   getNextValidMoves() {
 
@@ -18,14 +27,18 @@ export class Game {
     const candidateMoves = [];
     candidatePieces.forEach((piece) => {
       if (piece.type == 'p') {
-        // pawns have a single direction depending on their colour
+        // pawn has a single direction depending on its colour
         const direction = piece.colour == 'w' ? 1 : -1;
-        // pawns can always move forward one space
+        // pawn cannot move forward one space if that space is occupied
+        if (this.board[piece.file][piece.rank + direction]) return;
+        // pawn can always move forward one space
         candidateMoves.push({
           from: { file: piece.file, rank: piece.rank },
           to: { file: piece.file, rank: piece.rank + direction },
         });
-        // pawns can move forward two spaces if they have not moved before
+        // pawn cannot move forward two spaces if that space is occupied
+        if (this.board[piece.file][piece.rank + 2 * direction]) return;
+        // pawn can move forward two spaces if it has not moved before
         if (!piece.moved)
           candidateMoves.push({
             from: { file: piece.file, rank: piece.rank },
@@ -55,12 +68,15 @@ export class Game {
 
     // TODO take enemy piece which may be there already
 
-    // move piece
+    // move piece...
     const pieceIndex = this.pieces.findIndex((piece) => (
       piece.file == move.from.file && piece.rank == move.from.rank));
     this.pieces[pieceIndex].file = move.to.file;
     this.pieces[pieceIndex].rank = move.to.rank;
     this.pieces[pieceIndex].moved = true;
+    // ...and update board
+    this.board[move.from.file][move.from.rank] = null;
+    this.board[move.to.file][move.to.rank] = this.pieces[pieceIndex];
 
     // TODO record the move
 
