@@ -5,7 +5,14 @@
       <div
         v-for="(piece, i) in pieces"
         :key="i"
-        :class="['piece', `${piece.colour}${piece.type}`, `square-${piece.file}${piece.rank}`]"
+        :class="[
+          'piece',
+          `${piece.colour}${piece.type}`,
+          {
+            [`square-${piece.file}${piece.rank}`]: !piece.captured,
+            captured: piece.captured,
+          },
+        ]"
       ></div>
     </div>
   </div>
@@ -131,11 +138,12 @@ export default {
       this.pieces = this.game.pieces;
       this.nextValidMoves = this.game.getNextValidMoves();
 
-      // remove existing square class(es, though there should be max one ever)
+      // remove existing square class
       for (let i = 0; i < this.draggingElement.classList.length; ++i) {
         const className = this.draggingElement.classList[i];
         if (this.draggingElement.classList[i].startsWith('square-')) {
           this.draggingElement.classList.remove(className);
+          break;
         }
       }
 
@@ -170,6 +178,10 @@ export default {
   &.dragging {
     cursor: grabbing;
     z-index: 1;
+  }
+
+  &.captured {
+    display: none;
   }
 }
 
