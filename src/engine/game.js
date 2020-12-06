@@ -2,6 +2,7 @@ import initialPieces from './initialPieces';
 
 export class Game {
   turn = 'w';
+  moveHistory = [];
   // pieces and board reference each other, to make code simpler and faster hopefully
   pieces = initialPieces;
   board; // 9x9 2D array (1st of each array is not used, for easy 1-8 file/rank indexing)
@@ -46,7 +47,16 @@ export class Game {
           candidateMoves.push({ from, to: { file: diagonalPiece1.file, rank: diagonalPiece1.rank }});
         if (diagonalPiece2 && diagonalPiece2.colour != piece.colour)
           candidateMoves.push({ from, to: { file: diagonalPiece2.file, rank: diagonalPiece2.rank }});
-        // TODO en passant
+        // en passant
+        if (this.lastMoveWasPawnDoubleJump()) {
+          const lastMove = this.getLastMove();
+          const besidePiece1 = piece.file - 1 >= 1 ? this.board[piece.file - 1][piece.rank] : null;
+          const besidePiece2 = piece.file + 1 <= 8 ? this.board[piece.file + 1][piece.rank] : null;
+          if (besidePiece1 && besidePiece1.colour != piece.colour && besidePiece1.file == lastMove.move.to.file)
+            candidateMoves.push({ from, to: { file: besidePiece1.file, rank: besidePiece1.rank + direction }});
+          if (besidePiece2 && besidePiece2.colour != piece.colour && besidePiece2.file == lastMove.move.to.file)
+            candidateMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
+        }
       }
     });
 
@@ -69,21 +79,29 @@ export class Game {
     ));
     if (!validMove) return false;
 
-    // capture enemy piece which may be there already
-    const enemyPieceIndex = this.pieces.findIndex((piece) => (
+    const pieceIndex = this.pieces.findIndex((piece) => (
+      !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
+
+    // capture enemy piece on destination square, or behind pawn on en passant
+    let pieceCaptured;
+    let enemyPieceIndex = this.pieces.findIndex((piece) => (
       !piece.captured && piece.file == move.to.file && piece.rank == move.to.rank));
+    if (enemyPieceIndex < 0 && this.pieces[pieceIndex].type == 'p' && move.from.file != move.to.file) {
+      // if no enemy was captured on the destination square, and this is a pawn moving diagonally,
+      // then an enemy behind the pawn must be an en passant capture.
+      const direction = this.turn == 'w' ? 1 : -1;
+      enemyPieceIndex = this.pieces.findIndex((piece) => (
+        !piece.captured && piece.file == move.to.file && piece.rank == move.to.rank - direction));
+    }
     if (enemyPieceIndex >= 0) {
+      pieceCaptured = this.pieces[enemyPieceIndex];
       // capture piece...
       this.pieces[enemyPieceIndex].captured = true;
       // ...and update board
-      console.log('before', JSON.stringify(this.board[move.to.file][move.to.rank]))
-      this.board[move.to.file][move.to.rank] = null; // not needed?
-      console.log('after', JSON.stringify(this.board[move.to.file][move.to.rank]))
+      this.board[pieceCaptured.file][pieceCaptured.rank] = null;
     }
 
     // move piece...
-    const pieceIndex = this.pieces.findIndex((piece) => (
-      !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
     this.pieces[pieceIndex].file = move.to.file;
     this.pieces[pieceIndex].rank = move.to.rank;
     this.pieces[pieceIndex].moved = true;
@@ -91,11 +109,28 @@ export class Game {
     this.board[move.from.file][move.from.rank] = null;
     this.board[move.to.file][move.to.rank] = this.pieces[pieceIndex];
 
-    // TODO record the move
+    // record the move
+    this.moveHistory.push({ move, pieceMoved: this.pieces[pieceIndex], pieceCaptured });
 
     // change turns
-    this.turn = this.turn == 'w' ? 'b' : 'w';
+    this.turn = this.oppositeColour(this.turn);
 
     return true;
+  }
+
+  oppositeColour(colour) {
+    return colour == 'w' ? 'b' : 'w';
+  }
+
+  getLastMove() {
+    if (this.moveHistory.length == 0) return null;
+    return this.moveHistory[this.moveHistory.length - 1];
+  }
+
+  lastMoveWasPawnDoubleJump() {
+    const lastMove = this.getLastMove();
+    if (!lastMove) return false;
+    if (lastMove.pieceMoved.type != 'p') return false;
+    return Math.abs(lastMove.move.to.rank - lastMove.move.from.rank) == 2;
   }
 }
