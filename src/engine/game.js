@@ -58,6 +58,29 @@ export class Game {
             candidateMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
         }
       }
+
+      if (piece.type == 'n') {
+        // knight has 8 possible locations it can move to, each an L-shape from its current square
+        const self = this;
+        [
+          { file: piece.file - 1, rank: piece.rank - 2}, // up 2 left 1
+          { file: piece.file + 1, rank: piece.rank - 2}, // up 2 right 1
+          { file: piece.file - 1, rank: piece.rank + 2}, // down 2 left 1
+          { file: piece.file + 1, rank: piece.rank + 2}, // down 2 right 1
+          { file: piece.file - 2, rank: piece.rank - 1}, // left 2 up 1
+          { file: piece.file - 2, rank: piece.rank + 1}, // left 2 down 1
+          { file: piece.file + 2, rank: piece.rank - 1}, // right 2 up 1
+          { file: piece.file + 2, rank: piece.rank + 1}, // right 2 down 1
+        ].forEach((square) => {
+          // square must be on the board!
+          if (square.file > 8 || square.file < 1 || square.rank > 8 || square.rank < 1) return;
+          // knight cannot move to square occupied by another friendly piece
+          const pieceOnSquare = self.board[square.file][square.rank];
+          if (pieceOnSquare && pieceOnSquare.colour == piece.colour) return;
+          // square is empty or has enemy piece on it
+          candidateMoves.push({ from, to: { file: square.file, rank: square.rank }});
+        })
+      }
     });
 
     // TODO remove potential moves that have friendly pieces in the way (or pawn pieces blocking
