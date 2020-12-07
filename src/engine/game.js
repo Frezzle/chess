@@ -59,8 +59,7 @@ export class Game {
             candidateMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
         }
       }
-
-      if (piece.type == 'n') {
+      else if (piece.type == 'n') {
         // knight has 8 possible locations it can move to, each an L-shape from its current square
         const self = this;
         [
@@ -82,16 +81,19 @@ export class Game {
           candidateMoves.push({ from, to: { file: square.file, rank: square.rank }});
         })
       }
-
-      if (piece.type == 'b') {
+      else if (piece.type == 'b') {
         // Bishop can move in any diagonal, for any number of spaces until it is either blocked
         // by a friendly piece or can take an enemy piece.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
       }
-
-      if (piece.type == 'r') {
+      else if (piece.type == 'r') {
         // Rook can move vertically and horizontally (orthogonal), for any number of spaces until
         // it is either blocked by a friendly piece or can take an enemy piece.
+        candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
+      }
+      else if (piece.type == 'q') {
+        // Queen can move like a rook and a bishop.
+        candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
         candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
       }
     });
