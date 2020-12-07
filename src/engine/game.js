@@ -88,6 +88,12 @@ export class Game {
         // by a friendly piece or can take an enemy piece.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
       }
+
+      if (piece.type == 'r') {
+        // Rook can move vertically and horizontally (orthogonal), for any number of spaces until
+        // it is either blocked by a friendly piece or can take an enemy piece.
+        candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
+      }
     });
 
     // TODO remove potential moves that have friendly pieces in the way (or pawn pieces blocking
@@ -101,14 +107,32 @@ export class Game {
   // getValidDiagonalMoves gets all the valid diagonal moves that the piece can make,
   // which includes the squares occupied by enemies and any square leading to those or end of board.
   getValidDiagonalMoves(piece) {
-    const from = { file: piece.file, rank: piece.rank };
     const directions = [
       { file: 1, rank: 1 },
       { file: -1, rank: 1 },
       { file: 1, rank: -1 },
       { file: -1, rank: -1 },
     ];
-    const validDiagonalMoves = [];
+    return this.getValidMovesForEachDirection(piece, directions);
+  }
+
+  // getValidOrthogonalMoves gets all the valid orthogonal (vertical and horizontal) moves that the piece can make,
+  // which includes the squares occupied by enemies and any square leading to those or end of board.
+  getValidOrthogonalMoves(piece) {
+    const directions = [
+      { file: 1, rank: 0 },
+      { file: -1, rank: 0 },
+      { file: 0, rank: 1 },
+      { file: 0, rank: -1 },
+    ];
+    return this.getValidMovesForEachDirection(piece, directions);
+  }
+
+  // getValidMovesForEachDirection gets all the valid moves that the piece can make,
+  // in the given directions that the piece is able to move.
+  getValidMovesForEachDirection(piece, directions) {
+    const from = { file: piece.file, rank: piece.rank };
+    const validMoves = [];
     directions.forEach((dir) => {
       // start traversal first square that would exist in this direction
       let square = { file: piece.file + dir.file, rank: piece.rank + dir.rank };
@@ -119,13 +143,13 @@ export class Game {
         occupyingPiece = this.board[square.file][square.rank];
         // can move to empty square, or may capture enemy piece
         if (!occupyingPiece || occupyingPiece.colour != piece.colour)
-          validDiagonalMoves.push({ from, to: { file: square.file, rank: square.rank }});
+        validMoves.push({ from, to: { file: square.file, rank: square.rank }});
         // traverse to next square in this direction
         square.file += dir.file;
         square.rank += dir.rank;
       }
     });
-    return validDiagonalMoves;
+    return validMoves;
   }
 
   // movePiece returns true if move was valid and was performed, otherwise false.
