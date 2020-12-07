@@ -39,7 +39,7 @@ export class Game {
         // pawn can move forward two spaces if it never moved AND nothing is in its way
         const rankAheadAhead = piece.rank + 2 * direction;
         const pieceAheadAhead = rankAheadAhead >= 1 && rankAheadAhead <= 8 ? this.board[piece.file][rankAheadAhead] : null;
-        if (!pieceInFront && !piece.moved && !pieceAheadAhead)
+        if (!pieceInFront && piece.moves == 0 && !pieceAheadAhead)
           candidateMoves.push({ from, to: { file: piece.file, rank: rankAheadAhead }});
         // pawn can take enemy piece in either space diagonally forward
         const diagonalPiece1 = piece.file - 1 >= 1 ? this.board[piece.file - 1][piece.rank + direction] : null;
@@ -198,18 +198,55 @@ export class Game {
     // move piece...
     this.pieces[pieceIndex].file = move.to.file;
     this.pieces[pieceIndex].rank = move.to.rank;
-    this.pieces[pieceIndex].moved = true;
+    this.pieces[pieceIndex].moves++;
     // ...and update board
     this.board[move.from.file][move.from.rank] = null;
     this.board[move.to.file][move.to.rank] = this.pieces[pieceIndex];
 
     // record the move
-    this.moveHistory.push({ move, pieceMoved: this.pieces[pieceIndex], pieceCaptured });
+    this.moveHistory.push({
+      move,
+      pieceMovedIndex: pieceIndex,
+      pieceCapturedIndex: enemyPieceIndex,
+    });
 
     // change turns
     this.turn = this.oppositeColour(this.turn);
 
     return true;
+  }
+
+  undoLastMove() {
+    if (this.moveHistory.length == 0) return { pieceMovedBack: null, pieceResurrected: null };
+
+    // delete the last move from history
+    const lastMove = this.moveHistory.pop();
+
+    // put the moved piece back...
+    this.pieces[lastMove.pieceMovedIndex].file = lastMove.move.from.file;
+    this.pieces[lastMove.pieceMovedIndex].rank = lastMove.move.from.rank;
+    this.pieces[lastMove.pieceMovedIndex].moves--;
+    // ...and update board
+    this.board[lastMove.move.from.file][lastMove.move.from.rank] = this.pieces[lastMove.pieceMovedIndex];
+    this.board[lastMove.move.to.file][lastMove.move.to.rank] = null;
+
+    // if a piece was captured on the last move...
+    if (lastMove.pieceCapturedIndex >= 0) {
+      // ...then resurrect it...
+      this.pieces[lastMove.pieceCapturedIndex].captured = false;
+      // ...and place it back on the board (the piece's file/rank should be where it was captured)
+      const resurrectingPiece = this.pieces[lastMove.pieceCapturedIndex];
+      this.board[resurrectingPiece.file][resurrectingPiece.rank] = resurrectingPiece;
+    }
+
+    // change turns
+    this.turn = this.oppositeColour(this.turn);
+
+    // return affected pieces, allowing any interface to reverse too
+    return {
+      pieceMovedBack: this.pieces[lastMove.pieceMovedIndex],
+      pieceResurrected: lastMove.pieceCapturedIndex >= 0 ? this.pieces[lastMove.pieceCapturedIndex] : null,
+    };
   }
 
   oppositeColour(colour) {
@@ -224,7 +261,8 @@ export class Game {
   lastMoveWasPawnDoubleJump() {
     const lastMove = this.getLastMove();
     if (!lastMove) return false;
-    if (lastMove.pieceMoved.type != 'p') return false;
+    const lastMovedPiece = this.pieces[lastMove.pieceMovedIndex];
+    if (lastMovedPiece.type != 'p') return false;
     return Math.abs(lastMove.move.to.rank - lastMove.move.from.rank) == 2;
   }
 }

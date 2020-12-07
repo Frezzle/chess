@@ -1,5 +1,6 @@
 <template>
   <div class="game">
+    <button @click="undoMove">UNDO</button>
     <div class="board" ref="board">
       <Squares :moveHints="nextValidMoves" />
       <div
@@ -126,30 +127,18 @@ export default {
       };
       const moved = this.game.movePiece(move);
       if (!moved) return;
-      // const validMove = this.nextValidMoves.find((move) =>
-      //   move.from.file == this.draggingPiece.file &&
-      //   move.from.rank == this.draggingPiece.rank &&
-      //   move.to.file == file &&
-      //   move.to.rank == rank
-      // );
-      // if (!validMove) return;
 
       // update game state with new engine state
       this.pieces = this.game.pieces;
       this.nextValidMoves = this.game.getNextValidMoves();
-
-      // remove existing square class
-      for (let i = 0; i < this.draggingElement.classList.length; ++i) {
-        const className = this.draggingElement.classList[i];
-        if (this.draggingElement.classList[i].startsWith('square-')) {
-          this.draggingElement.classList.remove(className);
-          break;
-        }
-      }
-
-      // set piece position by assigning the appropriate square class
-      this.draggingElement.classList.add(`square-${file}${rank}`)
     },
+    undoMove() {
+      this.game.undoLastMove();
+
+      // update game state with new engine state
+      this.pieces = this.game.pieces;
+      this.nextValidMoves = this.game.getNextValidMoves();
+    }
   },
 };
 </script>
