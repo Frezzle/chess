@@ -58,8 +58,7 @@ export class Game {
           if (besidePiece2 && besidePiece2.colour != piece.colour && besidePiece2.file == lastMove.move.to.file)
             candidateMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
         }
-      }
-      else if (piece.type == 'n') {
+      } else if (piece.type == 'n') {
         // knight has 8 possible locations it can move to, each an L-shape from its current square
         const self = this;
         [
@@ -80,21 +79,22 @@ export class Game {
           // square is empty or has enemy piece on it
           candidateMoves.push({ from, to: { file: square.file, rank: square.rank }});
         })
-      }
-      else if (piece.type == 'b') {
+      } else if (piece.type == 'b') {
         // Bishop can move in any diagonal, for any number of spaces until it is either blocked
         // by a friendly piece or can take an enemy piece.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
-      }
-      else if (piece.type == 'r') {
+      } else if (piece.type == 'r') {
         // Rook can move vertically and horizontally (orthogonal), for any number of spaces until
         // it is either blocked by a friendly piece or can take an enemy piece.
         candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
-      }
-      else if (piece.type == 'q') {
+      } else if (piece.type == 'q') {
         // Queen can move like a rook and a bishop.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
         candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
+      } else if (piece.type == 'k') {
+        // King can move like a queen, but only one square at a time.
+        candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece, 1));
+        candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece, 1));
       }
     });
 
@@ -108,31 +108,33 @@ export class Game {
 
   // getValidDiagonalMoves gets all the valid diagonal moves that the piece can make,
   // which includes the squares occupied by enemies and any square leading to those or end of board.
-  getValidDiagonalMoves(piece) {
+  getValidDiagonalMoves(piece, limitPerDirection = 100) {
     const directions = [
       { file: 1, rank: 1 },
       { file: -1, rank: 1 },
       { file: 1, rank: -1 },
       { file: -1, rank: -1 },
     ];
-    return this.getValidMovesForEachDirection(piece, directions);
+    return this.getValidMovesForEachDirection(piece, directions, limitPerDirection);
   }
 
   // getValidOrthogonalMoves gets all the valid orthogonal (vertical and horizontal) moves that the piece can make,
   // which includes the squares occupied by enemies and any square leading to those or end of board.
-  getValidOrthogonalMoves(piece) {
+  getValidOrthogonalMoves(piece, limitPerDirection = 100) {
     const directions = [
       { file: 1, rank: 0 },
       { file: -1, rank: 0 },
       { file: 0, rank: 1 },
       { file: 0, rank: -1 },
     ];
-    return this.getValidMovesForEachDirection(piece, directions);
+    return this.getValidMovesForEachDirection(piece, directions, limitPerDirection);
   }
 
   // getValidMovesForEachDirection gets all the valid moves that the piece can make,
-  // in the given directions that the piece is able to move.
-  getValidMovesForEachDirection(piece, directions) {
+  // in the given directions that the piece is able to move,
+  // up to a limited distance (number of times the direction is applied to traverse the range
+  // of squares in each direction).
+  getValidMovesForEachDirection(piece, directions, limitPerDirection) {
     const from = { file: piece.file, rank: piece.rank };
     const validMoves = [];
     directions.forEach((dir) => {
@@ -140,7 +142,12 @@ export class Game {
       let square = { file: piece.file + dir.file, rank: piece.rank + dir.rank };
       // traverse squares in this direction until piece blocks the way or board edge is reached
       let occupyingPiece = null;
-      while (!occupyingPiece && square.file >= 1 && square.file <= 8 && square.rank >= 1 && square.rank <= 8) {
+      let traversed = 0;
+      while (
+            traversed < limitPerDirection
+            && !occupyingPiece
+            && square.file >= 1 && square.file <= 8 && square.rank >= 1 && square.rank <= 8
+          ) {
         // check for piece occupying this square
         occupyingPiece = this.board[square.file][square.rank];
         // can move to empty square, or may capture enemy piece
@@ -149,6 +156,7 @@ export class Game {
         // traverse to next square in this direction
         square.file += dir.file;
         square.rank += dir.rank;
+        ++traversed;
       }
     });
     return validMoves;
