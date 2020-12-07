@@ -14,6 +14,7 @@ export class Game {
       this.board[this.pieces[i].file][this.pieces[i].rank] = this.pieces[i];
   }
 
+  // TODO calculate and store next valid moves on start of game and on each turn, to not repeat same recalculations on invalid move attempts.
   getNextValidMoves() {
 
     let candidatePieces = [...this.pieces];
@@ -25,7 +26,7 @@ export class Game {
     candidatePieces = candidatePieces.filter((piece) => !piece.captured);
 
     // potential next moves
-    const candidateMoves = [];
+    let candidateMoves = [];
     candidatePieces.forEach((piece) => {
       const from = { file: piece.file, rank: piece.rank };
       if (piece.type == 'p') {
@@ -81,6 +82,12 @@ export class Game {
           candidateMoves.push({ from, to: { file: square.file, rank: square.rank }});
         })
       }
+
+      if (piece.type == 'b') {
+        // Bishop can move in any diagonal, for any number of spaces until it is either blocked
+        // by a friendly piece or can take an enemy piece.
+        candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
+      }
     });
 
     // TODO remove potential moves that have friendly pieces in the way (or pawn pieces blocking
@@ -89,6 +96,36 @@ export class Game {
     // TODO remove potential moves that cause king to become in check
 
     return candidateMoves;
+  }
+
+  // getValidDiagonalMoves gets all the valid diagonal moves that the piece can make,
+  // which includes the squares occupied by enemies and any square leading to those or end of board.
+  getValidDiagonalMoves(piece) {
+    const from = { file: piece.file, rank: piece.rank };
+    const directions = [
+      { file: 1, rank: 1 },
+      { file: -1, rank: 1 },
+      { file: 1, rank: -1 },
+      { file: -1, rank: -1 },
+    ];
+    const validDiagonalMoves = [];
+    directions.forEach((dir) => {
+      // start traversal first square that would exist in this direction
+      let square = { file: piece.file + dir.file, rank: piece.rank + dir.rank };
+      // traverse squares in this direction until piece blocks the way or board edge is reached
+      let occupyingPiece = null;
+      while (!occupyingPiece && square.file >= 1 && square.file <= 8 && square.rank >= 1 && square.rank <= 8) {
+        // check for piece occupying this square
+        occupyingPiece = this.board[square.file][square.rank];
+        // can move to empty square, or may capture enemy piece
+        if (!occupyingPiece || occupyingPiece.colour != piece.colour)
+          validDiagonalMoves.push({ from, to: { file: square.file, rank: square.rank }});
+        // traverse to next square in this direction
+        square.file += dir.file;
+        square.rank += dir.rank;
+      }
+    });
+    return validDiagonalMoves;
   }
 
   // movePiece returns true if move was valid and was performed, otherwise false.
