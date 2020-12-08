@@ -2,6 +2,7 @@ import initialPieces from './initialPieces';
 
 export class Game {
   turn = 'w';
+  check = false; // current turn's king is in check or not
   moveHistory = [];
   // pieces and board reference each other, to make code simpler and faster hopefully
   pieces = initialPieces;
@@ -15,12 +16,14 @@ export class Game {
   }
 
   // TODO calculate and store next valid moves on start of game and on each turn, to not repeat same recalculations on invalid move attempts.
-  getNextValidMoves() {
+  getNextValidMoves(colour) {
+    // colour defaults to whose turn it is, if not provided
+    if (!colour) colour = this.turn;
 
     let candidatePieces = [...this.pieces];
 
-    // can only move the pieces belonging to the player who's turn it is
-    candidatePieces = candidatePieces.filter((piece) => piece.colour == this.turn);
+    // can only move the pieces with the relevant colour
+    candidatePieces = candidatePieces.filter((piece) => piece.colour == colour);
 
     // can only move pieces that have not been captured
     candidatePieces = candidatePieces.filter((piece) => !piece.captured);
@@ -98,10 +101,7 @@ export class Game {
       }
     });
 
-    // TODO remove potential moves that have friendly pieces in the way (or pawn pieces blocking
-    // forward movement of other pawns).
-
-    // TODO remove potential moves that cause king to become in check
+    // TODO remove potential moves that cause king to become/remain in check
 
     return candidateMoves;
   }
@@ -165,7 +165,7 @@ export class Game {
   // movePiece returns true if move was valid and was performed, otherwise false.
   movePiece(move) {
     // ensure move is valid
-    const validMove = this.getNextValidMoves().find((validMove) => (
+    const validMove = this.getNextValidMoves(this.turn).find((validMove) => (
       validMove.from.file == move.from.file &&
       validMove.to.file == move.to.file &&
       validMove.from.rank == move.from.rank &&
@@ -203,11 +203,15 @@ export class Game {
     this.board[move.from.file][move.from.rank] = null;
     this.board[move.to.file][move.to.rank] = this.pieces[pieceIndex];
 
+    // see if enemy king is now in check...
+    this.check = this.kingIsInCheck(this.oppositeColour(this.turn));
+
     // record the move
     this.moveHistory.push({
       move,
       pieceMovedIndex: pieceIndex,
       pieceCapturedIndex: enemyPieceIndex,
+      check: this.check,
     });
 
     // change turns
@@ -217,7 +221,10 @@ export class Game {
   }
 
   undoLastMove() {
-    if (this.moveHistory.length == 0) return { pieceMovedBack: null, pieceResurrected: null };
+    if (this.moveHistory.length == 0) {
+      this.check = false;
+      return { pieceMovedBack: null, pieceResurrected: null };
+    }
 
     // delete the last move from history
     const lastMove = this.moveHistory.pop();
@@ -239,6 +246,10 @@ export class Game {
       this.board[resurrectingPiece.file][resurrectingPiece.rank] = resurrectingPiece;
     }
 
+    // restore previous check status
+    const moveBeforeLast = this.getLastMove();
+    this.check = moveBeforeLast ? moveBeforeLast.check : false;
+
     // change turns
     this.turn = this.oppositeColour(this.turn);
 
@@ -247,6 +258,22 @@ export class Game {
       pieceMovedBack: this.pieces[lastMove.pieceMovedIndex],
       pieceResurrected: lastMove.pieceCapturedIndex >= 0 ? this.pieces[lastMove.pieceCapturedIndex] : null,
     };
+  }
+
+  kingIsInCheck(kingColour) {
+    const king = this.pieces.find((piece) => (
+      piece.type == 'k' && piece.colour == kingColour
+    ));
+    if (!king) return false; // it should always return a king in normal chess
+
+    // get the other side's possible moves, assuming they can move next
+    const enemyMoves = this.getNextValidMoves(this.oppositeColour(kingColour));
+
+    // if one of their moves is to move to the king's square then the king is in check
+    const kingThreatened = enemyMoves.some((move) => (
+      move.to.file == king.file && move.to.rank == king.rank
+    ));
+    return kingThreatened;
   }
 
   oppositeColour(colour) {

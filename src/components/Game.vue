@@ -1,6 +1,7 @@
 <template>
   <div class="game">
     <button @click="undoMove">UNDO</button>
+    <span>Check: {{ check }}</span>
     <div class="board" ref="board">
       <Squares :moveHints="nextValidMoves" />
       <div
@@ -35,6 +36,7 @@ export default {
       draggingElement: null,
       pieces: game.pieces,
       nextValidMoves: game.getNextValidMoves(),
+      check: false,
     };
   },
   computed: {
@@ -128,17 +130,18 @@ export default {
       const moved = this.game.movePiece(move);
       if (!moved) return;
 
-      // update game state with new engine state
-      this.pieces = this.game.pieces;
-      this.nextValidMoves = this.game.getNextValidMoves();
+      this.updateGameState();
     },
     undoMove() {
       this.game.undoLastMove();
-
+      this.updateGameState();
+    },
+    updateGameState() {
       // update game state with new engine state
       this.pieces = this.game.pieces;
       this.nextValidMoves = this.game.getNextValidMoves();
-    }
+      this.check = this.game.check;
+    },
   },
 };
 </script>
