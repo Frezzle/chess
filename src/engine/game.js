@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash/cloneDeep';
 import initialPieces from './initialPieces';
 
 export class Game {
@@ -15,8 +16,19 @@ export class Game {
       this.board[this.pieces[i].file][this.pieces[i].rank] = this.pieces[i];
   }
 
-  // TODO calculate and store next valid moves on start of game and on each turn, to not repeat same recalculations on invalid move attempts.
-  getNextValidMoves(colour) {
+  clone() {
+    // TODO would be nice to have my own clone method... fewer dependencies.
+    // const game = new Game();
+    // game.turn = this.turn;
+    // game.check = this.check;
+    // game.moveHistory = this.moveHistory.map((m) => ({...m}));
+    // game.pieces = this.pieces.map((m) => ({...m}));
+    // for (let i = 0; i < game.pieces.length; ++i)
+    //   game.board[game.pieces[i].file][game.pieces[i].rank] = game.pieces[i];
+    // return game;
+    return cloneDeep(this);
+  }
+
     // colour defaults to whose turn it is, if not provided
     if (!colour) colour = this.turn;
 
