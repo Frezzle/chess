@@ -4,6 +4,7 @@ import initialPieces from './initialPieces';
 export class Game {
   turn = 'w';
   check = false; // current turn's king is in check or not
+  result = null;
   moveHistory = [];
   // pieces and board reference each other, to make code simpler and faster hopefully
   pieces = initialPieces;
@@ -15,7 +16,7 @@ export class Game {
     this.board = empty.map(() => [...empty]);
     for (let i = 0; i < this.pieces.length; ++i)
       this.board[this.pieces[i].file][this.pieces[i].rank] = this.pieces[i];
-    this.nextLegalMoves = this.getNextLegalMoves();
+    this.updateNextLegalMoves();
   }
 
   clone() {
@@ -31,11 +32,9 @@ export class Game {
     return cloneDeep(this);
   }
 
-  getNextLegalMoves(colour) {
-    // colour defaults to whose turn it is, if not provided
-    if (!colour) colour = this.turn;
-
-    const candidateMoves = this.getThreateningMoves(colour);
+  updateNextLegalMoves() {
+    // start with the potential moves that each piece could make
+    const candidateMoves = this.getThreateningMoves(this.turn);
 
     // remove potential moves that cause king to remain/get-into check
     const legalMoves = [];
@@ -50,9 +49,18 @@ export class Game {
       clone.undoLastMove(true);
     });
 
-    // TODO check for checkmate here?
+    // update next legal moves
+    this.nextLegalMoves = legalMoves;
 
-    return legalMoves;
+    // update game result...
+    // ...checkmate (king is checked and has no legal moves that would take him out of check)
+    if (this.check && legalMoves.length === 0) {
+      this.result = this.oppositeColour(this.turn);
+    } else {
+      // set to null, for resetting it when a move is reversed
+      this.result = null;
+    }
+    // ...TODO draw scenarios
   }
 
   // getThreateningMoves calculates the moves of every piece of that colour could make, assuming it's their turn
@@ -263,8 +271,7 @@ export class Game {
     this.turn = this.oppositeColour(this.turn);
 
     // update next legal moves
-    if (!skipUpdatingNextLegalMoves)
-      this.nextLegalMoves = this.getNextLegalMoves();
+    if (!skipUpdatingNextLegalMoves) this.updateNextLegalMoves();
 
     return true;
   }
@@ -305,8 +312,7 @@ export class Game {
     this.turn = this.oppositeColour(this.turn);
 
     // update next legal moves
-    if (!skipUpdatingNextLegalMoves)
-      this.nextLegalMoves = this.getNextLegalMoves();
+    if (!skipUpdatingNextLegalMoves) this.updateNextLegalMoves();
 
     // return affected pieces, allowing any interface to reverse too
     return {

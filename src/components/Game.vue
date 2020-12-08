@@ -1,7 +1,8 @@
 <template>
   <div class="game">
     <button @click="undoMove">UNDO</button>
-    <span>Check: {{ check }}</span>
+    <span>  Check: <b>{{ check }}</b></span>
+    <span> Result: <b>{{ result ? result : 'in progress' }}</b></span>
     <div class="board" ref="board">
       <Squares :moveHints="nextLegalMoves" />
       <div
@@ -37,6 +38,7 @@ export default {
       pieces: game.pieces,
       nextLegalMoves: game.nextLegalMoves,
       check: false,
+      result: null,
     };
   },
   computed: {
@@ -141,6 +143,7 @@ export default {
       this.pieces = this.game.pieces;
       this.nextLegalMoves = this.game.nextLegalMoves;
       this.check = this.game.check;
+      this.result = this.game.result;
     },
   },
 };
