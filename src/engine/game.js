@@ -8,12 +8,14 @@ export class Game {
   // pieces and board reference each other, to make code simpler and faster hopefully
   pieces = initialPieces;
   board; // 9x9 2D array (1st of each array is not used, for easy 1-8 file/rank indexing)
+  nextLegalMoves = [];
   
   constructor() {
     const empty = [null, null, null, null, null, null, null, null, null];
     this.board = empty.map(() => [...empty]);
     for (let i = 0; i < this.pieces.length; ++i)
       this.board[this.pieces[i].file][this.pieces[i].rank] = this.pieces[i];
+    this.nextLegalMoves = this.getNextLegalMoves();
   }
 
   clone() {
@@ -29,7 +31,6 @@ export class Game {
     return cloneDeep(this);
   }
 
-  // TODO calculate and store next legal moves on start of game and on each turn, to not repeat same recalculations on illegal move attempts.
   getNextLegalMoves(colour) {
     // colour defaults to whose turn it is, if not provided
     if (!colour) colour = this.turn;
@@ -41,12 +42,12 @@ export class Game {
     const clone = this.clone();
     candidateMoves.forEach((move) => {
       // ...by making each candidate move temporarily...
-      const moved = clone.movePiece(move, true);
+      const moved = clone.movePiece(move, true, true);
       if (!moved) console.error('piece did not move; it should always have moved! :O');
       // ...then checking if it puts/keeps the king in check (if it does not then it's legal)...
       if (!clone.kingIsInCheck(clone.oppositeColour(clone.turn))) legalMoves.push(move);
       // ...then reversing the move
-      clone.undoLastMove();
+      clone.undoLastMove(true);
     });
 
     // TODO check for checkmate here?
@@ -201,12 +202,14 @@ export class Game {
   }
 
   // movePiece returns true if move was legal and was performed, otherwise false.
-  // ignoreMoveValidity param is a hack to allow internal calculation of kings being in check;
+  // hack: ignoreMoveValidity param is a hack to allow internal calculation of kings being in check;
   // always use false yourself.
-  movePiece(move, ignoreMoveValidity = false) {
+  // hack: skipCalculatingNextLegalMoves param is also another hack related to
+  // calculating check and checkmate, and avoiding infinite recursion.
+  movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false) {
     // ensure move is legal
     if (!ignoreMoveValidity) {
-      const legalMove = this.getNextLegalMoves(this.turn).find((legalMove) => (
+      const legalMove = this.nextLegalMoves.find((legalMove) => (
         legalMove.from.file == move.from.file &&
         legalMove.to.file == move.to.file &&
         legalMove.from.rank == move.from.rank &&
@@ -259,10 +262,16 @@ export class Game {
     // change turns
     this.turn = this.oppositeColour(this.turn);
 
+    // update next legal moves
+    if (!skipUpdatingNextLegalMoves)
+      this.nextLegalMoves = this.getNextLegalMoves();
+
     return true;
   }
 
-  undoLastMove() {
+  // hack: skipCalculatingNextLegalMoves param is a hack related to
+  // calculating check and checkmate, and avoiding infinite recursion.
+  undoLastMove(skipUpdatingNextLegalMoves = false) {
     if (this.moveHistory.length == 0) {
       this.check = false;
       return { pieceMovedBack: null, pieceResurrected: null };
@@ -294,6 +303,10 @@ export class Game {
 
     // change turns
     this.turn = this.oppositeColour(this.turn);
+
+    // update next legal moves
+    if (!skipUpdatingNextLegalMoves)
+      this.nextLegalMoves = this.getNextLegalMoves();
 
     // return affected pieces, allowing any interface to reverse too
     return {

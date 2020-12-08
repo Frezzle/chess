@@ -35,7 +35,7 @@ export default {
       game,
       draggingElement: null,
       pieces: game.pieces,
-      nextLegalMoves: game.getNextLegalMoves(),
+      nextLegalMoves: game.nextLegalMoves,
       check: false,
     };
   },
@@ -139,7 +139,7 @@ export default {
     updateGameState() {
       // update game state with new engine state
       this.pieces = this.game.pieces;
-      this.nextLegalMoves = this.game.getNextLegalMoves();
+      this.nextLegalMoves = this.game.nextLegalMoves;
       this.check = this.game.check;
     },
   },
