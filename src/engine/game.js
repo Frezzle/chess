@@ -56,6 +56,8 @@ export class Game {
     // ...checkmate (king is checked and has no legal moves that would take him out of check)
     if (this.check && legalMoves.length === 0) {
       this.result = this.oppositeColour(this.turn);
+    } else if (!this.check && legalMoves.length === 0) {
+      this.result = 'stalemate';
     } else {
       // set to null, for resetting it when a move is reversed
       this.result = null;
