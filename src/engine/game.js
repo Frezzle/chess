@@ -29,6 +29,34 @@ export class Game {
     return cloneDeep(this);
   }
 
+  // TODO calculate and store next legal moves on start of game and on each turn, to not repeat same recalculations on illegal move attempts.
+  getNextLegalMoves(colour) {
+    // colour defaults to whose turn it is, if not provided
+    if (!colour) colour = this.turn;
+
+    const candidateMoves = this.getThreateningMoves(colour);
+
+    // remove potential moves that cause king to remain/get-into check
+    const legalMoves = [];
+    const clone = this.clone();
+    candidateMoves.forEach((move) => {
+      // ...by making each candidate move temporarily...
+      const moved = clone.movePiece(move, true);
+      if (!moved) console.error('piece did not move; it should always have moved! :O');
+      // ...then checking if it puts/keeps the king in check (if it does not then it's legal)...
+      if (!clone.kingIsInCheck(clone.oppositeColour(clone.turn))) legalMoves.push(move);
+      // ...then reversing the move
+      clone.undoLastMove();
+    });
+
+    // TODO check for checkmate here?
+
+    return legalMoves;
+  }
+
+  // getThreateningMoves calculates the moves of every piece of that colour could make, assuming it's their turn
+  // and without worrying about checks. This is useful for checking which squares these pieces are threatening.
+  getThreateningMoves(colour) {
     // colour defaults to whose turn it is, if not provided
     if (!colour) colour = this.turn;
 
@@ -113,12 +141,10 @@ export class Game {
       }
     });
 
-    // TODO remove potential moves that cause king to become/remain in check
-
     return candidateMoves;
   }
 
-  // getValidDiagonalMoves gets all the valid diagonal moves that the piece can make,
+  // getValidDiagonalMoves gets all the legal diagonal moves that the piece can make,
   // which includes the squares occupied by enemies and any square leading to those or end of board.
   getValidDiagonalMoves(piece, limitPerDirection = 100) {
     const directions = [
@@ -127,10 +153,10 @@ export class Game {
       { file: 1, rank: -1 },
       { file: -1, rank: -1 },
     ];
-    return this.getValidMovesForEachDirection(piece, directions, limitPerDirection);
+    return this.getLegalMovesForEachDirection(piece, directions, limitPerDirection);
   }
 
-  // getValidOrthogonalMoves gets all the valid orthogonal (vertical and horizontal) moves that the piece can make,
+  // getValidOrthogonalMoves gets all the legal orthogonal (vertical and horizontal) moves that the piece can make,
   // which includes the squares occupied by enemies and any square leading to those or end of board.
   getValidOrthogonalMoves(piece, limitPerDirection = 100) {
     const directions = [
@@ -139,16 +165,16 @@ export class Game {
       { file: 0, rank: 1 },
       { file: 0, rank: -1 },
     ];
-    return this.getValidMovesForEachDirection(piece, directions, limitPerDirection);
+    return this.getLegalMovesForEachDirection(piece, directions, limitPerDirection);
   }
 
-  // getValidMovesForEachDirection gets all the valid moves that the piece can make,
+  // getLegalMovesForEachDirection gets all the legal moves that the piece can make,
   // in the given directions that the piece is able to move,
   // up to a limited distance (number of times the direction is applied to traverse the range
   // of squares in each direction).
-  getValidMovesForEachDirection(piece, directions, limitPerDirection) {
+  getLegalMovesForEachDirection(piece, directions, limitPerDirection) {
     const from = { file: piece.file, rank: piece.rank };
-    const validMoves = [];
+    const legalMoves = [];
     directions.forEach((dir) => {
       // start traversal first square that would exist in this direction
       let square = { file: piece.file + dir.file, rank: piece.rank + dir.rank };
@@ -164,26 +190,30 @@ export class Game {
         occupyingPiece = this.board[square.file][square.rank];
         // can move to empty square, or may capture enemy piece
         if (!occupyingPiece || occupyingPiece.colour != piece.colour)
-        validMoves.push({ from, to: { file: square.file, rank: square.rank }});
+        legalMoves.push({ from, to: { file: square.file, rank: square.rank }});
         // traverse to next square in this direction
         square.file += dir.file;
         square.rank += dir.rank;
         ++traversed;
       }
     });
-    return validMoves;
+    return legalMoves;
   }
 
-  // movePiece returns true if move was valid and was performed, otherwise false.
-  movePiece(move) {
-    // ensure move is valid
-    const validMove = this.getNextValidMoves(this.turn).find((validMove) => (
-      validMove.from.file == move.from.file &&
-      validMove.to.file == move.to.file &&
-      validMove.from.rank == move.from.rank &&
-      validMove.to.rank == move.to.rank
-    ));
-    if (!validMove) return false;
+  // movePiece returns true if move was legal and was performed, otherwise false.
+  // ignoreMoveValidity param is a hack to allow internal calculation of kings being in check;
+  // always use false yourself.
+  movePiece(move, ignoreMoveValidity = false) {
+    // ensure move is legal
+    if (!ignoreMoveValidity) {
+      const legalMove = this.getNextLegalMoves(this.turn).find((legalMove) => (
+        legalMove.from.file == move.from.file &&
+        legalMove.to.file == move.to.file &&
+        legalMove.from.rank == move.from.rank &&
+        legalMove.to.rank == move.to.rank
+      ));
+      if (!legalMove) return false;
+    }
 
     const pieceIndex = this.pieces.findIndex((piece) => (
       !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
@@ -279,7 +309,7 @@ export class Game {
     if (!king) return false; // it should always return a king in normal chess
 
     // get the other side's possible moves, assuming they can move next
-    const enemyMoves = this.getNextValidMoves(this.oppositeColour(kingColour));
+    const enemyMoves = this.getThreateningMoves(this.oppositeColour(kingColour));
 
     // if one of their moves is to move to the king's square then the king is in check
     const kingThreatened = enemyMoves.some((move) => (

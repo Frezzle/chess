@@ -3,7 +3,7 @@
     <button @click="undoMove">UNDO</button>
     <span>Check: {{ check }}</span>
     <div class="board" ref="board">
-      <Squares :moveHints="nextValidMoves" />
+      <Squares :moveHints="nextLegalMoves" />
       <div
         v-for="(piece, i) in pieces"
         :key="i"
@@ -35,7 +35,7 @@ export default {
       game,
       draggingElement: null,
       pieces: game.pieces,
-      nextValidMoves: game.getNextValidMoves(),
+      nextLegalMoves: game.getNextLegalMoves(),
       check: false,
     };
   },
@@ -139,7 +139,7 @@ export default {
     updateGameState() {
       // update game state with new engine state
       this.pieces = this.game.pieces;
-      this.nextValidMoves = this.game.getNextValidMoves();
+      this.nextLegalMoves = this.game.getNextLegalMoves();
       this.check = this.game.check;
     },
   },
