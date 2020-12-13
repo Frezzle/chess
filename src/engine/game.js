@@ -149,10 +149,72 @@ export class Game {
         // King can move like a queen, but only one square at a time.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece, 1));
         candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece, 1));
+
+        // King can castle king-side, queen-side, both, or neither.
+        const kingSideCastle = this.getCandidateMoveForKingSideCastle(piece);
+        if (kingSideCastle) candidateMoves.push(kingSideCastle);
+        const queenSideCastle = this.getCandidateMoveForQueenSideCastle(piece);
+        if (queenSideCastle) candidateMoves.push(queenSideCastle);
       }
     });
 
     return candidateMoves;
+  }
+
+  getCandidateMoveForKingSideCastle(king) {
+    // king cannot castle while checked
+    if (this.check) return null;
+    // king cannot castle if he has already moved
+    if (king.moves > 0) return null;
+    const rook = this.board[8][king.rank];
+    // ensure the king's rook on that side has not moved yet
+    if (!rook || rook.type != 'r' || rook.colour != king.colour || rook.moves > 0) return null;
+    // ensure no pieces between rook and king
+    if (this.board[6][king.rank] || this.board[7][king.rank]) return null;
+    // ensure king would not move through check
+    const clone = this.clone();
+    let moved = clone.movePiece({from: {file: 5, rank: king.rank}, to: {file: 6, rank: king.rank}}, true, true);
+    if (!moved) console.error('king did not move; it should always have moved! :O');
+    if (clone.kingIsInCheck(king.colour)) return null;
+    clone.undoLastMove(true);
+    // no need to be sure here if king is in check in final square, because it is done for every piece already
+
+    return {
+      from: {file: king.file, rank: king.rank},
+      to: {file: king.file + 2, rank: king.rank},
+      extraMove: { // the rook also moves
+        from: {file: rook.file, rank: rook.rank},
+        to: {file: king.file + 1, rank: rook.rank},
+      },
+    };
+  }
+
+  getCandidateMoveForQueenSideCastle(king) {
+    // king cannot castle while checked
+    if (this.check) return null;
+    // king cannot castle if he has already moved
+    if (king.moves > 0) return null;
+    const rook = this.board[1][king.rank];
+    // ensure the king's rook on that side has not moved yet
+    if (!rook || rook.type != 'r' || rook.colour != king.colour || rook.moves > 0) return null;
+    // ensure no pieces between rook and king
+    if (this.board[2][king.rank] || this.board[3][king.rank] || this.board[4][king.rank]) return null;
+    // ensure king would not move through check
+    const clone = this.clone();
+    let moved = clone.movePiece({from: {file: 5, rank: king.rank}, to: {file: 4, rank: king.rank}}, true, true);
+    if (!moved) console.error('king did not move; it should always have moved! :O');
+    if (clone.kingIsInCheck(king.colour)) return null;
+    clone.undoLastMove(true);
+    // no need to be sure here if king is in check in final square, because it is done for every piece already
+
+    return {
+      from: {file: king.file, rank: king.rank},
+      to: {file: king.file - 2, rank: king.rank},
+      extraMove: { // the rook also moves
+        from: {file: rook.file, rank: rook.rank},
+        to: {file: king.file - 1, rank: rook.rank},
+      },
+    };
   }
 
   // getValidDiagonalMoves gets all the legal diagonal moves that the piece can make,
@@ -217,16 +279,19 @@ export class Game {
   // hack: skipCalculatingNextLegalMoves param is also another hack related to
   // calculating check and checkmate, and avoiding infinite recursion.
   movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false) {
-    // ensure move is legal
-    if (!ignoreMoveValidity) {
-      const legalMove = this.nextLegalMoves.find((legalMove) => (
-        legalMove.from.file == move.from.file &&
-        legalMove.to.file == move.to.file &&
-        legalMove.from.rank == move.from.rank &&
-        legalMove.to.rank == move.to.rank
-      ));
-      if (!legalMove) return false;
-    }
+
+    // get the actual move object the engine has created, as it may contain needed info e.g. extra move when castling
+    const legalMove = this.nextLegalMoves.find((legalMove) => (
+      legalMove.from.file == move.from.file &&
+      legalMove.to.file == move.to.file &&
+      legalMove.from.rank == move.from.rank &&
+      legalMove.to.rank == move.to.rank
+    ));
+    if (legalMove) move = legalMove;
+
+    // ensure move is legal, if the check hasn't been disabled by the caller
+    // (which it may, to prevent infinite recursion)
+    if (!ignoreMoveValidity && !legalMove) return false;
 
     const pieceIndex = this.pieces.findIndex((piece) => (
       !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
@@ -258,6 +323,21 @@ export class Game {
     this.board[move.from.file][move.from.rank] = null;
     this.board[move.to.file][move.to.rank] = this.pieces[pieceIndex];
 
+    // there may be an extra piece to be moved at the same time (i.e. in a castling move)...
+    let otherPieceIndex;
+    if (move.extraMove) {
+      if (!ignoreMoveValidity) console.log('extra move should be done now! whole move obj ->', move)
+      // ...so also do the extra move...
+      otherPieceIndex = this.pieces.findIndex((piece) => (
+        !piece.captured && piece.file == move.extraMove.from.file && piece.rank == move.extraMove.from.rank));
+      this.pieces[otherPieceIndex].file = move.extraMove.to.file;
+      this.pieces[otherPieceIndex].rank = move.extraMove.to.rank;
+      this.pieces[otherPieceIndex].moves++;
+      // ...and update board
+      this.board[move.extraMove.from.file][move.extraMove.from.rank] = null;
+      this.board[move.extraMove.to.file][move.extraMove.to.rank] = this.pieces[otherPieceIndex];
+    }
+
     // see if enemy king is now in check...
     this.check = this.kingIsInCheck(this.oppositeColour(this.turn));
 
@@ -265,6 +345,7 @@ export class Game {
     this.moveHistory.push({
       move,
       pieceMovedIndex: pieceIndex,
+      otherPieceMovedIndex: otherPieceIndex, // e.g. the rook when castling
       pieceCapturedIndex: enemyPieceIndex,
       check: this.check,
     });
@@ -296,6 +377,18 @@ export class Game {
     // ...and update board
     this.board[lastMove.move.from.file][lastMove.move.from.rank] = this.pieces[lastMove.pieceMovedIndex];
     this.board[lastMove.move.to.file][lastMove.move.to.rank] = null;
+
+    // there may be an extra piece to be moved at the same time (i.e. in a castling move)...
+    if (lastMove.move.extraMove) {
+      // ...so move that extra piece back...
+      this.pieces[lastMove.otherPieceMovedIndex].file = lastMove.move.extraMove.from.file;
+      this.pieces[lastMove.otherPieceMovedIndex].rank = lastMove.move.extraMove.from.rank;
+      this.pieces[lastMove.otherPieceMovedIndex].moves--;
+      // ...and update board
+      this.board[lastMove.move.extraMove.from.file][lastMove.move.extraMove.from.rank] =
+        this.pieces[lastMove.otherPieceMovedIndex];
+      this.board[lastMove.move.extraMove.to.file][lastMove.move.extraMove.to.rank] = null;
+    }
 
     // if a piece was captured on the last move...
     if (lastMove.pieceCapturedIndex >= 0) {
