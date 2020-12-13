@@ -140,7 +140,7 @@ export class Game {
       } else if (piece.type == 'r') {
         // Rook can move vertically and horizontally (orthogonal), for any number of spaces until
         // it is either blocked by a friendly piece or can take an enemy piece.
-        candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
+        // candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece));
       } else if (piece.type == 'q') {
         // Queen can move like a rook and a bishop.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece));
@@ -149,7 +149,44 @@ export class Game {
         // King can move like a queen, but only one square at a time.
         candidateMoves = candidateMoves.concat(this.getValidDiagonalMoves(piece, 1));
         candidateMoves = candidateMoves.concat(this.getValidOrthogonalMoves(piece, 1));
+
+        // King can castle with any viable rook, as long as king has not moved yet and is not in check.
+        const king = piece;
+        if (!this.check && king.moves === 0) {
+          let viableRooks = this.pieces.filter((p) => (
+            p.type == 'r' &&
+            p.colour == king.colour &&
+            !p.captured &&
+            p.moves == 0
+          ));
+          console.log('uncaptured/unmoved friendly rooks', viableRooks);
+          // make sure no pieces are between king and rook
+          viableRooks = viableRooks.filter((rook) => {
+            const kingFileDirection = Math.sign(rook.file - king.file);
+            let fileOffset = king.file + kingFileDirection;
+            while (fileOffset < rook.file - king.file) {
+              if (this.board[king.file + fileOffset][king.rank]) return false;
+              fileOffset += kingFileDirection;
+            }
+            return true;
+          });
+          console.log('rooks with not pieces between king', viableRooks);
+          // make sure king does not move through check in each castle move
+          const clone = this.clone();
+          viableRooks.forEach((rook) => {
+            // The king can castle with this rook if the next square in the path does not result in the
+            // king becoming checked. The current square is checked above by the king not being in check
+            // right now, and the last square gets check automatically as every move gets the check checked!
+            const kingNextFile = rook.file < king.file ? king.file - 1 : king.file + 1;
+            const move = {from, to: {file: kingNextFile, rank: king.rank}};
+            const moved = clone.movePiece(move, true, true);
+            if (!moved) console.error('piece did not move; it should always have moved! :O');
+            if (!clone.kingIsInCheck(king.colour)) candidateMoves.push(move);
+            clone.undoLastMove(true);
+          });
+        }
       }
+
     });
 
     return candidateMoves;
