@@ -4,7 +4,7 @@
       <div
         v-for="square in squares"
         :key="square.location"
-        :class="['square', square.colour]"
+        :class="['square', square.colour, {promotion: isPromotionSquare(square.location)}]"
       ></div>
     </div>
     <div v-for="style in hintStyles" :key="JSON.stringify(style)" class="arrow" :style="style.arrow">
@@ -22,6 +22,10 @@ export default {
       default: 400,
     },
     moveHints: {
+      type: Array,
+      default: () => [],
+    },
+    promotionSquares: {
       type: Array,
       default: () => [],
     },
@@ -89,7 +93,11 @@ export default {
       });
     },
   },
-  
+  methods: {
+    isPromotionSquare(locationString) {
+      return this.promotionSquares.findIndex((square) => `${square.file}${square.rank}` == locationString) >= 0;
+    },
+  },
 };
 </script>
 
@@ -109,6 +117,10 @@ export default {
   }
   &.dark {
     background-color: brown;
+  }
+
+  &.promotion {
+    box-shadow: 0 3000px rgba(48, 211, 95, 0.406) inset;
   }
 }
 

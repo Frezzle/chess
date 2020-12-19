@@ -4,7 +4,7 @@
     <span>  Check: <b>{{ check }}</b></span>
     <span> Result: <b>{{ result ? result : 'in progress' }}</b></span>
     <div class="board" ref="board">
-      <Squares :moveHints="nextLegalMoves" />
+      <Squares :moveHints="nextLegalMoves" :promotionSquares="promotionSquares" />
       <div
         v-for="(piece, i) in pieces"
         :key="i"
@@ -35,6 +35,7 @@ export default {
     return {
       game,
       draggingElement: null,
+      // TODO can the fields below be computed props rather than data?
       pieces: game.pieces,
       nextLegalMoves: game.nextLegalMoves,
       check: false,
@@ -47,6 +48,9 @@ export default {
       return this.pieces.find((piece) => (
         this.draggingElement.classList.contains(`square-${piece.file}${piece.rank}`)
       ));
+    },
+    promotionSquares() {
+      return this.game.promotionSquares[this.game.turn];
     },
   },
   mounted() {
@@ -124,12 +128,19 @@ export default {
       // allow moving piece back to its original square
       if (this.draggingPiece.file == file && this.draggingPiece.rank == rank) return;
 
-      // try the move
+      // construct move...
       const move = {
         from: { file: this.draggingPiece.file, rank: this.draggingPiece.rank },
         to: { file, rank },
       };
-      const moved = this.game.movePiece(move);
+      // ...if pawn moved onto a promotion square then, for now, promote to queen always...
+      // ...TODO give option to promote to queen, knight, bishop, rook, or cancel move.
+      let promotion = null;
+      if (this.draggingPiece.type == 'p' && this.game.isPromotionSquare(this.game.turn, file, rank))
+        promotion = 'q';
+
+      // try the move
+      const moved = this.game.movePiece(move, false, false, promotion);
       if (!moved) return;
 
       this.updateGameState();

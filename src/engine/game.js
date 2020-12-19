@@ -1,6 +1,9 @@
 import cloneDeep from 'lodash/cloneDeep';
 import initialPieces from './initialPieces';
 
+// TODO later: fix warning happening on console for pawn(?) not moving when it was apparently supposed to.
+// It doesn't seem to be causing issue AFAICT, so leaving it for now, but maybe there's a hidden bug here...
+
 export class Game {
   turn = 'w';
   check = false; // current turn's king is in check or not
@@ -10,6 +13,28 @@ export class Game {
   pieces = initialPieces;
   board; // 9x9 2D array (1st of each array is not used, for easy 1-8 file/rank indexing)
   nextLegalMoves = [];
+  promotionSquares = {
+    'w': [
+      {file: 1, rank: 8},
+      {file: 2, rank: 8},
+      {file: 3, rank: 8},
+      {file: 4, rank: 8},
+      {file: 5, rank: 8},
+      {file: 6, rank: 8},
+      {file: 7, rank: 8},
+      {file: 8, rank: 8},
+    ],
+    'b': [
+      {file: 1, rank: 1},
+      {file: 2, rank: 1},
+      {file: 3, rank: 1},
+      {file: 4, rank: 1},
+      {file: 5, rank: 1},
+      {file: 6, rank: 1},
+      {file: 7, rank: 1},
+      {file: 8, rank: 1},
+    ],
+  };
   
   constructor() {
     const empty = [null, null, null, null, null, null, null, null, null];
@@ -84,34 +109,42 @@ export class Game {
     candidatePieces.forEach((piece) => {
       const from = { file: piece.file, rank: piece.rank };
       if (piece.type == 'p') {
+        let pawnMoves = [];
         // pawn has a single direction depending on its colour
         const direction = piece.colour == 'w' ? 1 : -1;
         // pawn can move forward one space if nothing is in its way
         const pieceInFront = this.board[piece.file][piece.rank + direction];
         if (!pieceInFront)
-          candidateMoves.push({ from, to: { file: piece.file, rank: piece.rank + direction }});
+          pawnMoves.push({ from, to: { file: piece.file, rank: piece.rank + direction }});
         // pawn can move forward two spaces if it never moved AND nothing is in its way
         const rankAheadAhead = piece.rank + 2 * direction;
         const pieceAheadAhead = rankAheadAhead >= 1 && rankAheadAhead <= 8 ? this.board[piece.file][rankAheadAhead] : null;
         if (!pieceInFront && piece.moves == 0 && !pieceAheadAhead)
-          candidateMoves.push({ from, to: { file: piece.file, rank: rankAheadAhead }});
+          pawnMoves.push({ from, to: { file: piece.file, rank: rankAheadAhead }});
         // pawn can take enemy piece in either space diagonally forward
         const diagonalPiece1 = piece.file - 1 >= 1 ? this.board[piece.file - 1][piece.rank + direction] : null;
         const diagonalPiece2 = piece.file + 1 <= 8 ? this.board[piece.file + 1][piece.rank + direction] : null;
         if (diagonalPiece1 && diagonalPiece1.colour != piece.colour)
-          candidateMoves.push({ from, to: { file: diagonalPiece1.file, rank: diagonalPiece1.rank }});
+          pawnMoves.push({ from, to: { file: diagonalPiece1.file, rank: diagonalPiece1.rank }});
         if (diagonalPiece2 && diagonalPiece2.colour != piece.colour)
-          candidateMoves.push({ from, to: { file: diagonalPiece2.file, rank: diagonalPiece2.rank }});
+          pawnMoves.push({ from, to: { file: diagonalPiece2.file, rank: diagonalPiece2.rank }});
         // en passant
         if (this.lastMoveWasPawnDoubleJump()) {
           const lastMove = this.getLastMove();
           const besidePiece1 = piece.file - 1 >= 1 ? this.board[piece.file - 1][piece.rank] : null;
           const besidePiece2 = piece.file + 1 <= 8 ? this.board[piece.file + 1][piece.rank] : null;
           if (besidePiece1 && besidePiece1.colour != piece.colour && besidePiece1.file == lastMove.move.to.file)
-            candidateMoves.push({ from, to: { file: besidePiece1.file, rank: besidePiece1.rank + direction }});
+            pawnMoves.push({ from, to: { file: besidePiece1.file, rank: besidePiece1.rank + direction }});
           if (besidePiece2 && besidePiece2.colour != piece.colour && besidePiece2.file == lastMove.move.to.file)
-            candidateMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
+            pawnMoves.push({ from, to: { file: besidePiece2.file, rank: besidePiece2.rank + direction }});
         }
+        // for each pawn move, see if it requires promotion
+        pawnMoves = pawnMoves.map((move) => {
+          if (this.isPromotionSquare(this.turn, move.to.file, move.to.rank)) move.mustPromote = true;
+          return move;
+        })
+        // register the candidate pawn moves
+        candidateMoves = candidateMoves.concat(pawnMoves);
       } else if (piece.type == 'n') {
         // knight has 8 possible locations it can move to, each an L-shape from its current square
         const self = this;
@@ -278,7 +311,7 @@ export class Game {
   // always use false yourself.
   // hack: skipCalculatingNextLegalMoves param is also another hack related to
   // calculating check and checkmate, and avoiding infinite recursion.
-  movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false) {
+  movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false, promotion) {
 
     // get the actual move object the engine has created, as it may contain needed info e.g. extra move when castling
     const legalMove = this.nextLegalMoves.find((legalMove) => (
@@ -295,6 +328,16 @@ export class Game {
 
     const pieceIndex = this.pieces.findIndex((piece) => (
       !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
+
+    // see if the piece is a pawn being promoted
+    if (this.pieces[pieceIndex].type == 'p' && move.mustPromote) {
+      // get promotion piece chosen...
+      const validPromotedType = ['q', 'r', 'b', 'n'].find((t) => t == promotion);
+      // ...or fail if no valid option chosen
+      if (!validPromotedType) return false;
+      // promote the pawn
+      this.pieces[pieceIndex].type = validPromotedType;
+    }
 
     // capture enemy piece on destination square, or behind pawn on en passant
     let pieceCaptured;
@@ -326,7 +369,6 @@ export class Game {
     // there may be an extra piece to be moved at the same time (i.e. in a castling move)...
     let otherPieceIndex;
     if (move.extraMove) {
-      if (!ignoreMoveValidity) console.log('extra move should be done now! whole move obj ->', move)
       // ...so also do the extra move...
       otherPieceIndex = this.pieces.findIndex((piece) => (
         !piece.captured && piece.file == move.extraMove.from.file && piece.rank == move.extraMove.from.rank));
@@ -347,6 +389,7 @@ export class Game {
       pieceMovedIndex: pieceIndex,
       otherPieceMovedIndex: otherPieceIndex, // e.g. the rook when castling
       pieceCapturedIndex: enemyPieceIndex,
+      promoted: !!promotion,
       check: this.check,
     });
 
@@ -369,6 +412,9 @@ export class Game {
 
     // delete the last move from history
     const lastMove = this.moveHistory.pop();
+
+    // undo any pawn promotion that may have happened
+    if (lastMove.promoted) this.pieces[lastMove.pieceMovedIndex].type = 'p';
 
     // put the moved piece back...
     this.pieces[lastMove.pieceMovedIndex].file = lastMove.move.from.file;
@@ -430,6 +476,10 @@ export class Game {
       move.to.file == king.file && move.to.rank == king.rank
     ));
     return kingThreatened;
+  }
+
+  isPromotionSquare(colour, file, rank) {
+    return this.promotionSquares[colour].findIndex((square) => square.file == file && square.rank == rank) >= 0;
   }
 
   oppositeColour(colour) {
