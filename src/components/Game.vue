@@ -17,6 +17,20 @@
           },
         ]"
       ></div>
+      <div
+        :class="['promotion-selection', {hidden: !promotionSelectionFile}]"
+        :style="{
+          transform: `translateX(${(promotionSelectionFile - 1) * 100}%)`,
+        }"
+      >
+        <div
+          v-for="option in ['q', 'n', 'r', 'b']"
+          :key="`${game.turn}${option}`"
+          :class="['promotion-option', `${game.turn}${option}`]"
+          @click="selectPromotion(option)"
+        ></div>
+        <div class="promotion-cancel" @click="cancelPromotion"><span>x</span></div>
+      </div>
     </div>
   </div>
 </template>
@@ -35,6 +49,8 @@ export default {
     return {
       game,
       draggingElement: null,
+      promotionMove: null, // to temporarily store the move that will be attempted after player confirms pawn promotion choice.
+      promotionSelectionFile: null, // null to hide, otherwise 1-8 to position
       // TODO can the fields below be computed props rather than data?
       pieces: game.pieces,
       nextLegalMoves: game.nextLegalMoves,
@@ -128,17 +144,39 @@ export default {
       // allow moving piece back to its original square
       if (this.draggingPiece.file == file && this.draggingPiece.rank == rank) return;
 
-      // construct move...
+      // construct move
       const move = {
         from: { file: this.draggingPiece.file, rank: this.draggingPiece.rank },
         to: { file, rank },
       };
-      // ...if pawn moved onto a promotion square then, for now, promote to queen always...
-      // ...TODO give option to promote to queen, knight, bishop, rook, or cancel move.
-      let promotion = null;
-      if (this.draggingPiece.type == 'p' && this.game.isPromotionSquare(this.game.turn, file, rank))
-        promotion = 'q';
 
+      // if pawn moved onto a promotion square then prompt user to choose promotion, otherwise confirm the move now
+      if (this.draggingPiece.type == 'p' && this.game.isPromotionSquare(this.game.turn, file, rank)) {
+        this.promptPromotionBeforeMove(move);
+      } else {
+        this.confirmMove(move);
+      }
+    },
+    promptPromotionBeforeMove(move) {
+      // store move for later confirmation
+      this.promotionMove = move;
+      // make promotion selection visible at the location where pawn will move to once promoted
+      this.promotionSelectionFile = move.to.file;
+    },
+    cancelPromotion() {
+      // clear temporary promotion move
+      this.promotionMove = null;
+      // hide promotion selection
+      this.promotionSelectionFile = null;
+    },
+    selectPromotion(option) {
+      this.confirmMove(this.promotionMove, option);
+      // clear temporary promotion move
+      this.promotionMove = null;
+      // hide promotion selection
+      this.promotionSelectionFile = null;
+    },
+    confirmMove(move, promotion = null) {
       // try the move
       const moved = this.game.movePiece(move, false, false, promotion);
       if (!moved) return;
@@ -189,6 +227,50 @@ export default {
   &.captured {
     display: none;
   }
+}
+
+// pawn promotion
+.promotion-selection {
+  user-select: none;
+  width: 12.5%;
+  height: calc(100% * (4.5 / 8)); // to fit 4/8 squares and half-square sized cross
+  display: flex;
+  flex-direction: column;
+  background-color: whitesmoke;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.promotion-option {
+  user-select: none;
+  width: 100%;
+  height: calc(100% * (2 / 9));
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+
+  &:hover {
+    background-color: lightgray;
+  }
+}
+.promotion-cancel {
+  user-select: none;
+  width: 100%;
+  height: calc(100% * (1 / 9));
+  background-color: rgb(235, 235, 235);
+  color: gray;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: lightgray;
+  }
+}
+
+.hidden {
+  visibility: hidden;
 }
 
 // images

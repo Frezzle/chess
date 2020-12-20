@@ -4,6 +4,8 @@ import initialPieces from './initialPieces';
 // TODO later: fix warning happening on console for pawn(?) not moving when it was apparently supposed to.
 // It doesn't seem to be causing issue AFAICT, so leaving it for now, but maybe there's a hidden bug here...
 
+// TODO fix checks; seems to be broken / regressed at some point...
+
 export class Game {
   turn = 'w';
   check = false; // current turn's king is in check or not
@@ -311,7 +313,7 @@ export class Game {
   // always use false yourself.
   // hack: skipCalculatingNextLegalMoves param is also another hack related to
   // calculating check and checkmate, and avoiding infinite recursion.
-  movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false, promotion) {
+  movePiece(move, ignoreMoveValidity = false, skipUpdatingNextLegalMoves = false, promotion = null) {
 
     // get the actual move object the engine has created, as it may contain needed info e.g. extra move when castling
     const legalMove = this.nextLegalMoves.find((legalMove) => (
@@ -328,6 +330,10 @@ export class Game {
 
     const pieceIndex = this.pieces.findIndex((piece) => (
       !piece.captured && piece.file == move.from.file && piece.rank == move.from.rank));
+    if (pieceIndex < 0) {
+      console.error('movePiece: piece not found for move', move);
+      return;
+    }
 
     // see if the piece is a pawn being promoted
     if (this.pieces[pieceIndex].type == 'p' && move.mustPromote) {
