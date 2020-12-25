@@ -76,20 +76,24 @@ export class Game {
       clone.undoLastMove(true);
     });
 
-    // update next legal moves
-    this.nextLegalMoves = legalMoves;
-
     // update game result...
-    // ...checkmate (king is checked and has no legal moves that would take him out of check)
+    const livePieces = this.pieces.filter((p) => !p.captured);
     if (this.check && legalMoves.length === 0) {
+      // ...checkmate (king is checked and has no legal moves that would take him out of check)
       this.result = this.oppositeColour(this.turn);
     } else if (!this.check && legalMoves.length === 0) {
       this.result = 'stalemate';
+    } else if (livePieces.length < 3 || (livePieces.length == 3 && livePieces.some((p) => p.type == 'b'))) {
+      // ...insufficient material (2 kings, or 2 kings and bishop)
+      this.result = 'draw';
     } else {
-      // set to null, for resetting it when a move is reversed
+      // ...reset the result if move is undone
       this.result = null;
     }
-    // ...TODO draw scenarios
+    // ...TODO more draw scenarios
+    
+    // update next legal moves
+    this.nextLegalMoves = this.result ? [] : legalMoves;
   }
 
   // getThreateningMoves calculates the moves of every piece of that colour could make, assuming it's their turn
