@@ -1,29 +1,22 @@
-# chess
+# 🏗️ ♞
 
-## Project setup
-```
-yarn install
-```
+An incomplete, buggy implementation of chess.
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+![](preview.png)
 
-### Compiles and minifies for production
-```
-yarn build
-```
+#### Features
 
-### Run your unit tests
-```
-yarn test
-```
+- Turn-based.
+- Show valid moves.
+- Undo moves.
+- Pawn promotion.
+- Castling 🏯
+- Checks and checkmates.
 
-### Lints and fixes files
-```
-yarn lint
-```
+#### Missing
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+- Computer opponent; right now you battle yourself, so it's closer to real life than a game.
+
+#### Apologies
+
+I got the icons from the internet but don't remember where. I will resolve this! If you're the artist, I'm sorry 🙏
